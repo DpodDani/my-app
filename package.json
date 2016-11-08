@@ -1,0 +1,18 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "description": "Sentiment analysis on system logs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "Daniel Namu-Fetha",
+  "license": "ISC",
+  "dependencies": {
+    "bayes": "0.0.6",
+    "ejs": "^2.5.2",
+    "express": "^4.14.0",
+    "nodemon": "^1.11.0"
+  }
+}
