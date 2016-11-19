@@ -13,7 +13,8 @@ angular.module('myApp').controller('mainController', ['$scope', '$http', functio
 
     $http.get('/getMessage')
     .then(function(response) {
-	$scope.message = response.data;
+		$scope.message = response.data;
+		console.log($scope.message);
     });
 
 }]);

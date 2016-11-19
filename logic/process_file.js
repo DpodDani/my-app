@@ -2,29 +2,34 @@ const fs = require('fs');
 const readline = require('readline');
 const stream = require('stream');
 
-const streamOptions = {};
+const streamOptions = {
+	start: 0,
+	end: 1000
+};
 
 // TODO: implement Promises
 const processFile = function() {
 
-    const instream = fs.createReadStream(__dirname + '/../public/files/Mar01', streamOptions);
-    const outstream = new stream;
-    const readLine = readline.createInterface(instream, outstream);
+    return new Promise(function(resolve, reject) {
 
-    console.log("Inside processing file");
+		const instream = fs.createReadStream(__dirname + '/../public/files/Mar01', streamOptions);
+		const outstream = new stream;
+		const readLine = readline.createInterface(instream, outstream);
 
-    let arrayOfLines = [];
+		console.log("Inside processing file");
 
-    readLine.on('line', (line) => {
-	arrayOfLines.push(line);
+		let arrayOfLines = [];
+
+		readLine.on('line', (line) => {
+			arrayOfLines.push(line);
+		});
+
+		readLine.on('close', () => {
+			console.log("Finished reading file");
+			resolve(arrayOfLines);
+		});
+
     });
-
-    readLine.on('close', () => {
-	console.log("Finished reading file");
-	return arrayOfLines;
-    });
-
-    return "";
 
 }
 
