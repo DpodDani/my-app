@@ -1,13 +1,17 @@
 const fs = require('fs');
 const readline = require('readline');
 const stream = require('stream');
+const Promise = require('bluebird');
 
-const streamOptions = {};
+const streamOptions = {
+	start: 0,
+	end: 100
+};
 
 // TODO: implement Promises
-const processFile = function() {
+const processFile = new Promise(function(resolve, reject) {
 
-    const instream = fs.createReadStream(__dirname + '/../public/files/Mar01', streamOptions);
+	const instream = fs.createReadStream(__dirname + '/../public/files/Mar01', streamOptions);
     const outstream = new stream;
     const readLine = readline.createInterface(instream, outstream);
 
@@ -16,16 +20,14 @@ const processFile = function() {
     let arrayOfLines = [];
 
     readLine.on('line', (line) => {
-	arrayOfLines.push(line);
+		arrayOfLines.push(line);
     });
 
     readLine.on('close', () => {
-	console.log("Finished reading file");
-	return arrayOfLines;
+		console.log("Finished reading file");
+		resolve(arrayOfLines);
     });
 
-    return "";
-
-}
+});
 
 exports.process = processFile;

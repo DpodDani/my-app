@@ -9,9 +9,9 @@ router.get('/', function(req, res, next) {
 
 router.get('/getMessage', function(req, res, next) {
     const message = bayes.getJson();
-    const array = processFile.process();
-    console.log(array);
-    res.send(array);
+    processFile.process.then(function(data){
+		res.send(data);
+	});
 });
 
 module.exports = router;
