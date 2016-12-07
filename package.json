@@ -10,11 +10,13 @@
   "author": "Daniel Namu-Fetha",
   "license": "ISC",
   "dependencies": {
+    "async": "^2.1.4",
     "bayes": "0.0.6",
     "bluebird": "^3.4.6",
     "ejs": "^2.5.2",
     "express": "^4.14.0",
     "lodash": "^4.17.2",
+    "moment": "^2.17.1",
     "nodemon": "^1.11.0"
   }
 }
