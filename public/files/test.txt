@@ -1,2 +1,48 @@
-Hello world
-Bye world
+2405712 Mar 1 00:00:28 i114-312 kernel X check events logged\n  check events logged\n <6>Machine    
+2405672 Mar 1 00:00:38 i178-111 kernel X check events logged\n  check events logged\n <6>Machine    
+2405713 Mar 1 00:01:22 i151-306 kernel X check events logged\n  check events logged\n <6>Machine    
+2404826 Mar 1 00:01:26 i138-212 kernel X %sLustre: %d:(%s:%d:%s()) %x-%x: an error occurred while communicating with %s. The %s operation failed with %d\n  %sLustre: %d:(%s:%d:%s()) %x-%x: an error occurred while communicating with %s. The %s operation failed with %d\n   <3>   14779  client.c  client.c   975  ptlrpc_check_status  ptlrpc_check_status   17   0   129.114.97.1@o2ib  mds_close  mds_close   -116    
+2404826 Mar 1 00:01:26 i138-212 kernel X %sLustre: %d:(%s:%d:%s()) inode %lu mdc close failed: rc %d\n  %sLustre: %d:(%s:%d:%s()) inode %lu mdc close failed: rc %d\n   <3>   14779  file.c  file.c   116  ll_close_inode_openhandle  ll_close_inode_openhandle   268863956   -116    
+2404826 Mar 1 00:01:26 i138-212 kernel X %sLustre: %d:(%s:%d:%s()) Skipped %d previous similar message%s\n  %sLustre: %d:(%s:%d:%s()) Skipped %d previous similar message%s\n   <3>   14779  file.c  file.c   116  ll_close_inode_openhandle  ll_close_inode_openhandle   7  s  s    
+2405682 Mar 1 00:02:22 i125-401 kernel X check events logged\n  check events logged\n <6>Machine    
+2405687 Mar 1 00:02:24 i114-107 kernel X check events logged\n  check events logged\n <6>Machine    
+2405685 Mar 1 00:02:49 i166-412 kernel X check events logged\n  check events logged\n <6>Machine    
+2405768 Mar 1 00:03:01 i154-401 kernel X check events logged\n  check events logged\n <6>Machine    
+2405684 Mar 1 00:03:07 i128-305 kernel X check events logged\n  check events logged\n <6>Machine    
+2404895 Mar 1 00:03:10 i102-112 kernel X check events logged\n  check events logged\n <6>Machine    
+2405506 Mar 1 00:03:23 i180-402 kernel X check events logged\n  check events logged\n <6>Machine    
+0 Mar 1 00:04:02 i101-104 kernel X check events logged\n  check events logged\n <6>Machine    
+2405768 Mar 1 00:04:11 i154-401 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   1    
+2405768 Mar 1 00:04:11 i154-401 kernel X core: %d\n  core: %d\n   -1    
+2405768 Mar 1 00:04:11 i154-401 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405768 Mar 1 00:04:11 i154-401 kernel X MC%d: CE ERROR_ADDRESS=  MC%d: CE ERROR_ADDRESS= <3>EDAC amd64 0x%llx\n   1   15956705312    
+2405768 Mar 1 00:04:11 i154-401 kernel X MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n  MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n <4>EDAC 0x%lx, 0x%lx, 0x%lx,   1   3895680   32   0   37638   4   0     amd64_edac    
+2405768 Mar 1 00:04:11 i154-401 kernel X MC%d: CE no information available: %s\n  MC%d: CE no information available: %s\n <4>EDAC   1  Overflow  Overflow amd64_edacError    
+2405705 Mar 1 00:04:12 i128-405 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   1    
+2405705 Mar 1 00:04:12 i128-405 kernel X core: %d\n  core: %d\n   -1    
+2405705 Mar 1 00:04:12 i128-405 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405687 Mar 1 00:04:14 i114-107 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   0    
+2405687 Mar 1 00:04:14 i114-107 kernel X core: %d\n  core: %d\n   -1    
+2405687 Mar 1 00:04:14 i114-107 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405687 Mar 1 00:04:14 i114-107 kernel X MC%d: CE ERROR_ADDRESS=  MC%d: CE ERROR_ADDRESS= <3>EDAC amd64 0x%llx\n   0   1047545008    
+2405687 Mar 1 00:04:14 i114-107 kernel X MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n  MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n <4>EDAC 0x%lx, 0x%lx, 0x%lx,   0   255748   1200   0   29480   4   1     amd64_edac    
+2401469 Mar 1 00:04:21 i146-110 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   0    
+2401469 Mar 1 00:04:21 i146-110 kernel X core: %d\n  core: %d\n   -1    
+2401469 Mar 1 00:04:21 i146-110 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405682 Mar 1 00:04:22 i125-401 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   2    
+2405682 Mar 1 00:04:22 i125-401 kernel X core: %d\n  core: %d\n   -1    
+2405682 Mar 1 00:04:22 i125-401 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405447 Mar 1 00:04:24 i160-411 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   0    
+2405447 Mar 1 00:04:24 i160-411 kernel X core: %d\n  core: %d\n   -1    
+2405447 Mar 1 00:04:24 i160-411 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405447 Mar 1 00:04:24 i160-411 kernel X MC%d: CE ERROR_ADDRESS=  MC%d: CE ERROR_ADDRESS= <3>EDAC amd64 0x%llx\n   0   6355502864    
+2405447 Mar 1 00:04:24 i160-411 kernel X MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n  MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n <4>EDAC 0x%lx, 0x%lx, 0x%lx,   0   1551636   1808   0   6824   4   1     amd64_edac    
+2405447 Mar 1 00:04:24 i160-411 kernel X MC%d: CE no information available: %s\n  MC%d: CE no information available: %s\n <4>EDAC   0  Overflow  Overflow amd64_edacError    
+2405672 Mar 1 00:04:27 i178-111 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   1    
+2405672 Mar 1 00:04:27 i178-111 kernel X core: %d\n  core: %d\n   -1    
+2405672 Mar 1 00:04:27 i178-111 kernel X  <0>%s.\n  ECC error  ECC error K8    
+2405672 Mar 1 00:04:27 i178-111 kernel X MC%d: CE ERROR_ADDRESS=  MC%d: CE ERROR_ADDRESS= <3>EDAC amd64 0x%llx\n   1   12025367296    
+2405672 Mar 1 00:04:27 i178-111 kernel X MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n  MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n <4>EDAC 0x%lx, 0x%lx, 0x%lx,   1   2935880   2816   0   23464   6   1     amd64_edac    
+0 Mar 1 00:04:28 i163-304 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   3    
+0 Mar 1 00:04:28 i163-304 kernel X core: %d\n  core: %d\n   0    
+0
