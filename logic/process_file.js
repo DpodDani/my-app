@@ -23,11 +23,11 @@ const processFile = function() {
 
 		readLine.on('line', (line) => {
 			arrayOfLines.push(line);
-			console.log(classify.getClassification(line));
 		});
 
 		readLine.on('close', () => {
 			console.log("Finished reading file");
+			classify.getClassification(arrayOfLines);
 			resolve(arrayOfLines);
 		});
 

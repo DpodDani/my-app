@@ -11,19 +11,43 @@ const negativeWords = [
   'error_address'
 ];
 
-const classify = (line) => {
+// const classify = (line) => {
+//
+//   let label = 'G';
+//   const arrayOfWords = cleanLine(line);
+//
+//   _.forEach(arrayOfWords, (word) => {
+//     if (_.indexOf(negativeWords, _.lowerCase(word)) > -1) {
+//       label = 'B';
+//       return label;
+//     }
+//   });
+//
+//   return label;
+//
+// };
 
-  let label = 'G';
-  const arrayOfWords = cleanLine(line);
+const classify = (arrayOfLines) => {
 
-  _.forEach(arrayOfWords, (word) => {
-    if (_.indexOf(negativeWords, _.lowerCase(word)) > -1) {
-      label = 'B';
-      return label;
+  async.each(arrayOfLines, (line, callback) => {
+    let label = 'G';
+    const arrayOfWords = cleanLine(line);
+
+    _.forEach(arrayOfWords, (word) => {
+      if (_.indexOf(negativeWords, _.lowerCase(word)) > -1) {
+        label = 'B';
+      }
+    });
+    console.log("Label: " + label);
+    callback(label, null);
+
+  }, (result, err) => {
+    if (err) {
+      console.log('Couldn\'t label log lines');
+    } else {
+      console.log("Labelling completed");
     }
   });
-
-  return label;
 
 };
 
