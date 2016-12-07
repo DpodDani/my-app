@@ -15,14 +15,6 @@ class Util {
     };
   }
 
-  getNegativeArray () {
-    return [
-      "error",
-      "failed",
-      
-    ];
-  }
-
 }
 
 module.exports = Util;
