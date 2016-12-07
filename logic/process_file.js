@@ -10,11 +10,6 @@ const util = new Util();
 const mar01 = util.getLogPaths().Mar01;
 const test = util.getLogPaths().test;
 
-const streamOptions = {
-	start: 0,
-	end: 100
-};
-
 const processFile = function() {
 
     return new Promise(function(resolve, reject) {
