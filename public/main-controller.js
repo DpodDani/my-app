@@ -1,20 +1,13 @@
 angular.module('myApp').controller('mainController', ['$scope', '$http', function($scope, $http) {
 
-    $scope.message = 'Hello World';
+  $scope.startTime = moment().get('millisecond'); //488, 905, 349 => 581
 
-    /*$http({
-	method: 'GET',
-	url: '/getMessage'
-    }).then(function success(response) {
-	$scope.message = response.data;
-    }, function error(response) {
-	$scope.message = response.statusText;
-    });*/
+  $http.get('/getMessage')
+  .then(function(response) {
+    //$scope.message = response.data;
+    $scope.endTime = moment().get('millisecond'); //530, 957, 382 => 623
+  });
 
-    $http.get('/getMessage')
-    .then(function(response) {
-		$scope.message = response.data;
-		console.log($scope.message);
-    });
+  // time difference of 42 seconds (without async library)
 
 }]);

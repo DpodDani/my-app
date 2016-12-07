@@ -2,7 +2,7 @@ const fs = require('fs');
 const _ = require('lodash');
 const readline = require('readline');
 const stream = require('stream');
-const Promise = require('bluebird');
+const async = require('async');
 const Util = require('./Util.js');
 
 const negativeWords = [

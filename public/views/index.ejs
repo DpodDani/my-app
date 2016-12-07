@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="myApp">
 
-    <head>
-	<%- include header %>
-	<title> My App </title>
-    </head>
+<head>
+  <%- include header %>
+  <title> My App </title>
+</head>
 
-    <body ng-controller="mainController">
-	{{ message }}
-    </body>
+<body ng-controller="mainController">
+  Start time: {{ startTime }} <br>
+  End time: {{ endTime }}
+</body>
 
-    <%- include footer %>
+<%- include footer %>
 
 </html>
