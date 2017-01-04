@@ -8,22 +8,23 @@ const Util = require('./Util.js');
 const negativeWords = [
   'error',
   'failed',
-  'error_address'
 ];
 
 
-/**
- *
- *
- */
+// TODO: Swap forEach for async.each
 const classify = (logNode) => {
   let label = 'G';
   const arrayOfWords = cleanLine(logNode.message);
 
   _.forEach(arrayOfWords, (word) => {
-    if (_.indexOf(negativeWords, _.lowerCase(word)) > -1) {
-      label = 'B';
-    }
+    _.forEach(negativeWords, (negativeWord) => {
+      if (word.toLowerCase().includes(negativeWord)){
+        label = 'B';
+      }
+    });
+    // if (_.indexOf(negativeWords, _.lowerCase(word)) > -1) {
+    //   label = 'B';
+    // }
   });
   //console.log("Label: " + label);
   logNode.label = label;
