@@ -1,20 +1,4 @@
-/**
- *  A utility class that will contain meta data for the application.
- *  @constructor
- */
-class Util {
-
-  constructor () {
-    // empty for now
-  }
-
-  getLogPaths() {
-    return {
-      "Mar01" : "/../public/files/Mar01",
-      "test" : "/../public/files/test.txt"
-    };
-  }
-
-}
-
-module.exports = Util;
+module.exports = {
+  "Mar01" : __dirname + "/../public/files/Mar01",
+  "test" : __dirname + "/../public/files/test.txt"
+};
