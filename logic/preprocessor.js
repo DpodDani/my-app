@@ -44,12 +44,12 @@ const preprocessor = (logFilePath) => {
 		readLine.on('close', () => {
 			console.log("Finished reading file");
 
-      async.each(arrayOfLogNodes, getClassification, function(err){
-          if (err){
-            console.log(LOG_NAME + "Error assigning class to log nodes");
-          } else {
-            console.log(LOG_NAME + "Successfully assigned class to log nodes");
-          }
+      applyClassification(arrayOfLogNodes)
+      .then ( (newArrayOfLogNodes) => {
+        arrayOfLogNodes = newArrayOfLogNodes;
+      })
+      .error ( (err) => {
+        console.log(err);
       });
 
 
@@ -60,6 +60,21 @@ const preprocessor = (logFilePath) => {
     });
 
 };
+
+const applyClassification = (arrayOfLogNodes) => {
+
+  return new Promise (function(resolve, reject){
+    async.each(arrayOfLogNodes, getClassification, function(err){
+      if (err){
+        reject(LOG_NAME + "Error assigning class to log nodes");
+      } else {
+        console.log(LOG_NAME + "Successfully assigned class to log nodes");
+        resolve(arrayOfLogNodes);
+      }
+    });
+  });
+
+}
 
 const getClassification = (logNode, callback) => {
   if (lineClassifier.getClassification(logNode)) callback();
