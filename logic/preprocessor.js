@@ -8,6 +8,7 @@ const async = require('async');
 
 const Util = require('./Util.js'); // contains meta data
 const LogNode = require('./LogNode.js'); // used to store meta information for each log line in the log file
+const Window = require('./Window.js');
 const lineClassifier = require(Util.LINE_CLASSIFIER); // used to assign labels to data that will be used for training classifier
 const LOG_NAME = 'PRE: ';
 
@@ -79,28 +80,27 @@ const findBadWindows
   console.log(LOG_NAME + "Beginning search for windows.");
   return new Promise( (resolve, reject) => {
     const numOfSoftLocks = _.size(arrayOfSoftLockups);
-    const numOfNodes = _.size(logNodeHashmap);
+    //const numOfNodes = _.size(logNodeHashmap);
     let windowsOfLockups = {};
 
-    // TODO: Definitely use async here to speed things  up
+    // TODO: Maybe use async here to speed things up
     for (let x = numOfSoftLocks - 1; x >= 0; x--){
-      let softLockupIndex = arrayOfSoftLockups[x];
-      let fNode = logNodeHashmap[softLockupIndex];
+      let mNodeIndex = arrayOfSoftLockups[x];
+      let fNode = logNodeHashmap[mNodeIndex];
       let softLockupTS = fNode.timestamp;
-      let windowOfLabels = [];
-      windowOfLabels.push(fNode.label);
+      let sequenceOfLabels = fNode.label;
       let stopSearch = false;
 
-      //console.log("Object at loc: " + logNodeHashmap[softLockupIndex]);
-      for (let y = softLockupIndex - 1; (y >= 1) && (!stopSearch); y--){
+      //console.log("Object at loc: " + logNodeHashmap[mNodeIndex]);
+      for (let y = mNodeIndex - 1; (y >= 1) && (!stopSearch); y--){
         let sNode = logNodeHashmap[y];
         let priorTimestamp = sNode.timestamp;
         let timeDiff = moment.duration(softLockupTS.diff(priorTimestamp)).asHours();
         if (timeDiff > 3){
-          windowsOfLockups[softLockupIndex] = {"BAD" : windowOfLabels};
+          windowsOfLockups[mNodeIndex] = new Window(mNodeIndex, sequenceOfLabels, 'B_WINDOW');;
           stopSearch = true;
         } else {
-          windowOfLabels.push(sNode.label);
+          sequenceOfLabels += sNode.label;
         }
         //if (timeDiff >= 5) console.log("IT'S OVER 5 HOURS!!!");
       }
