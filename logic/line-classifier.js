@@ -5,6 +5,8 @@ const stream = require('stream');
 const async = require('async');
 const Util = require('./Util.js');
 
+const LOG_NAME = 'LINE_CLASSIFIER: ';
+
 const negativeWords = [
   'error',
   'failed',
