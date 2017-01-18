@@ -52,10 +52,11 @@ const preprocessor = (logFilePath) => {
         .then ( (arrayOfSoftLockups) => {
           //hashmapWithLabels = classificationResult.hashmap;
           // console.log(logNodeHashmap);
-          return getWindowOfNodes(arrayOfSoftLockups, logNodeHashmap);
+          return findBadWindows(arrayOfSoftLockups, logNodeHashmap);
         })
-        .then ( (something) => {
-          console.log("Successfully looked at windows.");
+        .then ( (windowsOfLockups) => {
+          console.log("windowsOfLockups: ");
+          console.log(windowsOfLockups[175366]);
         })
         .error ( (err) => {
           console.log(LOG_NAME + err);
@@ -73,43 +74,43 @@ const preprocessor = (logFilePath) => {
 
 };
 
-const getWindowOfNodes
+const findBadWindows
  = (arrayOfSoftLockups, logNodeHashmap) => {
   console.log(LOG_NAME + "Beginning search for windows.");
   return new Promise( (resolve, reject) => {
     const numOfSoftLocks = _.size(arrayOfSoftLockups);
     const numOfNodes = _.size(logNodeHashmap);
+    let windowsOfLockups = {};
 
     // TODO: Definitely use async here to speed things  up
     for (let x = numOfSoftLocks - 1; x >= 0; x--){
       let softLockupIndex = arrayOfSoftLockups[x];
-      //console.log("Index: " + softLockupIndex);
-      let softLockupTS = logNodeHashmap[softLockupIndex].timestamp;
+      let fNode = logNodeHashmap[softLockupIndex];
+      let softLockupTS = fNode.timestamp;
+      let windowOfLabels = [];
+      windowOfLabels.push(fNode.label);
+      let stopSearch = false;
+
       //console.log("Object at loc: " + logNodeHashmap[softLockupIndex]);
-      for (let y = softLockupIndex - 1; y >= 1; y--){
-        //console.log("Y: " + y);
-        let priorTimestamp = logNodeHashmap[y].timestamp;
+      for (let y = softLockupIndex - 1; (y >= 1) && (!stopSearch); y--){
+        let sNode = logNodeHashmap[y];
+        let priorTimestamp = sNode.timestamp;
         let timeDiff = moment.duration(softLockupTS.diff(priorTimestamp)).asHours();
+        if (timeDiff > 3){
+          windowsOfLockups[softLockupIndex] = {"BAD" : windowOfLabels};
+          stopSearch = true;
+        } else {
+          windowOfLabels.push(sNode.label);
+        }
         //if (timeDiff >= 5) console.log("IT'S OVER 5 HOURS!!!");
       }
     }
-
-    // // iterates through all log nodes and compares their time difference with earlier log nodes
-    // for (var j = 0; j < keys.length; j++){
-    //   key = keys[j];
-    //   //console.log("j: " + j);
-    //   //console.log(logNodeHashmap[key].timestamp);
-    //   let ts = logNodeHashmap[key].timestamp;
-    //   for (var i = j; i < keys.length; i++){
-    //     //console.log("i: " + i);
-    //     subKey = keys[i];
-    //     let duration = moment.duration(ts.diff(logNodeHashmap[subKey].timestamp)).asHours();
-    //     //console.log("Time difference: " + duration);
-    //     //if (duration > 5) console.log("IT'S OVER 5 HOURS!!!");
-    //   }
-    // }
-
+    resolve(windowsOfLockups);
   });
+}
+
+const findGoodWindows = (arrayOfSoftLockups, logNodeHashmap) => {
+
 }
 
 const applyClassification = (logNodeHashmap) => {
