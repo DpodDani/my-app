@@ -6,102 +6,157 @@ const _ = require('lodash');
 const moment = require('moment');
 const async = require('async');
 
-const Util = require('./Util.js');
-const LogNode = require('./LogNode.js');
-const lineClassifier = require('./line-classifier.js');
+const Util = require('./Util.js'); // contains meta data
+const LogNode = require('./LogNode.js'); // used to store meta information for each log line in the log file
+const lineClassifier = require(Util.LINE_CLASSIFIER); // used to assign labels to data that will be used for training classifier
 const LOG_NAME = 'PRE: ';
 
-const util = new Util();
-const mar01 = util.getLogPaths().Mar01;
-const test = util.getLogPaths().test;
+//const filePathTest = Util.FILE_PATH_TEST;
+const filePathTest = Util.LOG_FILE_PATH;
 let counter = 1;
+let arrayOfSoftLockups = [];
 
 /** TODO
- *  Reads logs from a specified log file and returns an Object containing the training data that can be used to train a classifier.
- *
- *  @param  {String}
- *  @return {Object} Object
- */
+*  Reads logs from a specified log file and returns an Object containing the training data that can be used to train a classifier.
+*
+*  @param  {String}
+*  @return {Object} Object
+*/
 const preprocessor = (logFilePath) => {
 
-    return new Promise(function(resolve, reject) {
-		const instream = fs.createReadStream(__dirname + logFilePath);
-		const outstream = new stream;
-		const readLine = readline.createInterface(instream, outstream);
+  return new Promise( (resolve, reject) => {
 
-		console.log("Inside processing file");
+    fs.stat(logFilePath, (err) => {
+      if (err) throw new Error(LOG_NAME + "File cannot be found at specified log file path");
 
-		let arrayOfLogNodes = {};
+      const instream = fs.createReadStream(logFilePath);
+      const outstream = new stream;
+      const readLine = readline.createInterface(instream, outstream);
 
-    // Reads in a single line from the log file, creates a LogNode and pushes it to an array containing all the LogNodes
-		readLine.on('line', (line) => {
-      let timestamp =  getTimeStamp(line);
-      let logNode = new LogNode(counter++, line, timestamp);
-      //console.log(logNode);
-			arrayOfLogNodes[counter++] = logNode;
-		});
+      console.log("Inside processing file");
 
-		readLine.on('close', () => {
-			console.log("Finished reading file");
+      let logNodeHashmap = {}; // will hold all the LogNodes created for each line in the log file
 
-      applyClassification(arrayOfLogNodes)
-      .then ( (newArrayOfLogNodes) => {
-        arrayOfLogNodes = newArrayOfLogNodes;
-      })
-      .error ( (err) => {
-        console.log(err);
+      // Reads in a single line from the log file, creates a LogNode and pushes it to an array containing all the LogNodes
+      readLine.on('line', (line) => {
+        let timestamp =  getTimeStamp(line);
+        let logNode = new LogNode(counter, line, timestamp);
+        //console.log(logNode);
+        logNodeHashmap[counter++] = logNode;
       });
 
+      readLine.on('close', () => {
+        console.log("Finished reading file");
 
+        applyClassification(logNodeHashmap)
+        .then ( (arrayOfSoftLockups) => {
+          //hashmapWithLabels = classificationResult.hashmap;
+          // console.log(logNodeHashmap);
+          return getWindowOfNodes(arrayOfSoftLockups, logNodeHashmap);
+        })
+        .then ( (something) => {
+          console.log("Successfully looked at windows.");
+        })
+        .error ( (err) => {
+          console.log(LOG_NAME + err);
+        })
 
-			resolve(arrayOfLogNodes);
-		});
+        resolve(logNodeHashmap);
+      });
 
+      readLine.on('error', (err) => {
+        console.log(LOG_NAME + "Error whilst reading log file.");
+      })
     });
+
+  });
 
 };
 
-const applyClassification = (arrayOfLogNodes) => {
+const getWindowOfNodes
+ = (arrayOfSoftLockups, logNodeHashmap) => {
+  console.log(LOG_NAME + "Beginning search for windows.");
+  return new Promise( (resolve, reject) => {
+    const numOfSoftLocks = _.size(arrayOfSoftLockups);
+    const numOfNodes = _.size(logNodeHashmap);
 
-  return new Promise (function(resolve, reject){
-    async.each(arrayOfLogNodes, getClassification, function(err){
+    // TODO: Definitely use async here to speed things  up
+    for (let x = numOfSoftLocks - 1; x >= 0; x--){
+      let softLockupIndex = arrayOfSoftLockups[x];
+      //console.log("Index: " + softLockupIndex);
+      let softLockupTS = logNodeHashmap[softLockupIndex].timestamp;
+      //console.log("Object at loc: " + logNodeHashmap[softLockupIndex]);
+      for (let y = softLockupIndex - 1; y >= 1; y--){
+        //console.log("Y: " + y);
+        let priorTimestamp = logNodeHashmap[y].timestamp;
+        let timeDiff = moment.duration(softLockupTS.diff(priorTimestamp)).asHours();
+        //if (timeDiff >= 5) console.log("IT'S OVER 5 HOURS!!!");
+      }
+    }
+
+    // // iterates through all log nodes and compares their time difference with earlier log nodes
+    // for (var j = 0; j < keys.length; j++){
+    //   key = keys[j];
+    //   //console.log("j: " + j);
+    //   //console.log(logNodeHashmap[key].timestamp);
+    //   let ts = logNodeHashmap[key].timestamp;
+    //   for (var i = j; i < keys.length; i++){
+    //     //console.log("i: " + i);
+    //     subKey = keys[i];
+    //     let duration = moment.duration(ts.diff(logNodeHashmap[subKey].timestamp)).asHours();
+    //     //console.log("Time difference: " + duration);
+    //     //if (duration > 5) console.log("IT'S OVER 5 HOURS!!!");
+    //   }
+    // }
+
+  });
+}
+
+const applyClassification = (logNodeHashmap) => {
+  console.log(LOG_NAME + "Applying classification to logs.");
+  return new Promise ( (resolve, reject) => {
+    async.each(logNodeHashmap, getLogClassification, (err) => {
       if (err){
         reject(LOG_NAME + "Error assigning class to log nodes");
       } else {
         console.log(LOG_NAME + "Successfully assigned class to log nodes");
-        resolve(arrayOfLogNodes);
+        //console.log("Locations of softlockups: " + arrayOfSoftLockups);
+        resolve(arrayOfSoftLockups);
       }
     });
   });
-
 }
 
-const getClassification = (logNode, callback) => {
-  if (lineClassifier.getClassification(logNode)) callback();
-  else callback('Error');
-}
-
-const getArrayOfWindows = (logNode) => {
-
-
-
+const getLogClassification = (logNode, callback) => {
+  setTimeout( () => {
+    const result = lineClassifier.classifyLogLine(logNode);
+    const softLockupNodeId = result.nodeId;
+    const error = result.error;
+    if (!error){
+      if (softLockupNodeId)
+        arrayOfSoftLockups.push(softLockupNodeId);
+      callback();
+    } else {
+      callback('Error');
+    }
+  }, 1000);
 }
 
 /**
- *  Takes an input log string and extracts the date and time.
- *  Expected format is: MMM D(D) HH:mm:ss
- *  It handles single and double digit days
- *
- *  @param {String} line  Full log message
- *  @return {Moment} Returns the datetime as a moment object (or null if there is no date or there is an incorrect format)
- *
- */
+*  Takes an input log string and extracts the date and time.
+*  Expected format is: MMM D(D) HH:mm:ss
+*  It handles single and double digit days
+*
+*  @param {String} line  Full log message
+*  @return {Moment} Returns the datetime as a moment object (or null if there is no date or there is an incorrect format)
+*
+*/
 const getTimeStamp = (line) => {
   const timestamp = line.match(/[A-Z][a-z]{2}\s\d+\s\d{2}:\d{2}:\d{2}/);
   if (timestamp !== null) return moment(timestamp[0], "MMM D HH:mm:ss");
   else return null;
 }
 
-preprocessor(test);
+preprocessor(filePathTest);
 
 exports.preprocess = preprocessor;

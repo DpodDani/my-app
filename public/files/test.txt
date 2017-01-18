@@ -44,4 +44,4 @@
 2405672 Mar 1 00:04:27 i178-111 kernel X MC%d: CE ERROR_ADDRESS=  MC%d: CE ERROR_ADDRESS= <3>EDAC amd64 0x%llx\n   1   12025367296
 2405672 Mar 1 00:04:27 i178-111 kernel X MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n  MC%d: CE page offset grain %d, syndrome row %d, channel %d, label "%s": %s\n <4>EDAC 0x%lx, 0x%lx, 0x%lx,   1   2935880   2816   0   23464   6   1     amd64_edac
 0 Mar 1 00:04:28 i163-304 kernel X Northbridge Error, node %d  Northbridge Error, node %d <0>   3
-0 Mar 1 00:04:28 i163-304 kernel X core: %d\n  core: %d\n   0    
+0 Mar 1 00:04:28 i163-304 kernel X core: %d\n  core: %d\n   0

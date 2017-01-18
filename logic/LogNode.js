@@ -1,4 +1,5 @@
 class LogNode {
+
   constructor(id, message, timestamp) {
     this.id = id;
     this.message = message;
@@ -7,10 +8,6 @@ class LogNode {
 
   getTimestamp() {
     return this.timestamp;
-  }
-
-  getId() {
-    return this.id;
   }
 
   getLogMessage() {
