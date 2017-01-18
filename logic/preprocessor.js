@@ -14,7 +14,7 @@ const LOG_NAME = 'PRE: ';
 
 //const filePathTest = Util.FILE_PATH_TEST;
 const filePathTest = Util.LOG_FILE_PATH;
-let counter = 1;
+let hashMapKeyCounter = 1;
 let arrayOfSoftLockups = [];
 
 /** TODO
@@ -34,30 +34,32 @@ const preprocessor = (logFilePath) => {
       const outstream = new stream;
       const readLine = readline.createInterface(instream, outstream);
 
-      console.log("Inside processing file");
+      console.log(LOG_NAME + "Inside processing file.");
 
       let logNodeHashmap = {}; // will hold all the LogNodes created for each line in the log file
 
       // Reads in a single line from the log file, creates a LogNode and pushes it to an array containing all the LogNodes
       readLine.on('line', (line) => {
         let timestamp =  getTimeStamp(line);
-        let logNode = new LogNode(counter, line, timestamp);
+        let logNode = new LogNode(hashMapKeyCounter, line, timestamp);
         //console.log(logNode);
-        logNodeHashmap[counter++] = logNode;
+        logNodeHashmap[hashMapKeyCounter++] = logNode;
       });
 
       readLine.on('close', () => {
-        console.log("Finished reading file");
+        console.log(LOG_NAME + "Finished reading file.");
 
         applyClassification(logNodeHashmap)
         .then ( (arrayOfSoftLockups) => {
           //hashmapWithLabels = classificationResult.hashmap;
           // console.log(logNodeHashmap);
+          console.log(arrayOfSoftLockups);
           return findBadWindows(arrayOfSoftLockups, logNodeHashmap);
         })
-        .then ( (windowsOfLockups) => {
-          console.log("windowsOfLockups: ");
-          console.log(windowsOfLockups[175366]);
+        .then ( (arrayOfWindows) => {
+          console.log("arrayOfWindows: ");
+          //console.log(arrayOfWindows[175366]);
+          //console.log(_.find(arrayOfWindows, (window) => { return window.label === 'B_WINDOW'; }));
         })
         .error ( (err) => {
           console.log(LOG_NAME + err);
@@ -79,38 +81,34 @@ const findBadWindows
  = (arrayOfSoftLockups, logNodeHashmap) => {
   console.log(LOG_NAME + "Beginning search for windows.");
   return new Promise( (resolve, reject) => {
-    const numOfSoftLocks = _.size(arrayOfSoftLockups);
-    //const numOfNodes = _.size(logNodeHashmap);
-    let windowsOfLockups = {};
+    const numOfSoftLocks = arrayOfSoftLockups.length;
+    let arrayOfWindows = [];
 
     // TODO: Maybe use async here to speed things up
     for (let x = numOfSoftLocks - 1; x >= 0; x--){
       let mNodeIndex = arrayOfSoftLockups[x];
       let fNode = logNodeHashmap[mNodeIndex];
-      let softLockupTS = fNode.timestamp;
+      let fNodeTS = fNode.timestamp;
       let sequenceOfLabels = fNode.label;
       let stopSearch = false;
 
-      //console.log("Object at loc: " + logNodeHashmap[mNodeIndex]);
       for (let y = mNodeIndex - 1; (y >= 1) && (!stopSearch); y--){
         let sNode = logNodeHashmap[y];
-        let priorTimestamp = sNode.timestamp;
-        let timeDiff = moment.duration(softLockupTS.diff(priorTimestamp)).asHours();
+        let sNodeTS = sNode.timestamp;
+        let timeDiff = moment.duration(fNodeTS.diff(sNodeTS)).asHours();
         if (timeDiff > 3){
-          windowsOfLockups[mNodeIndex] = new Window(mNodeIndex, sequenceOfLabels, 'B_WINDOW');;
+          let lastNodeOfWindow = logNodeHashmap[y+1];
+          let windowLabel = (lastNodeOfWindow.label === 'G') ? 'G_WINDOW' : 'B_WINDOW';
+          arrayOfWindows.push(new Window(mNodeIndex, sequenceOfLabels, windowLabel));
           stopSearch = true;
         } else {
           sequenceOfLabels += sNode.label;
         }
-        //if (timeDiff >= 5) console.log("IT'S OVER 5 HOURS!!!");
       }
     }
-    resolve(windowsOfLockups);
+    console.log(LOG_NAME + "Finished search for windows.");
+    resolve(arrayOfWindows);
   });
-}
-
-const findGoodWindows = (arrayOfSoftLockups, logNodeHashmap) => {
-
 }
 
 const applyClassification = (logNodeHashmap) => {
@@ -118,10 +116,9 @@ const applyClassification = (logNodeHashmap) => {
   return new Promise ( (resolve, reject) => {
     async.each(logNodeHashmap, getLogClassification, (err) => {
       if (err){
-        reject(LOG_NAME + "Error assigning class to log nodes");
+        reject(LOG_NAME + "Error assigning class to log nodes.");
       } else {
-        console.log(LOG_NAME + "Successfully assigned class to log nodes");
-        //console.log("Locations of softlockups: " + arrayOfSoftLockups);
+        console.log(LOG_NAME + "Successfully assigned class to log nodes.");
         resolve(arrayOfSoftLockups);
       }
     });
