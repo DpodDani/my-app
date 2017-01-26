@@ -5,19 +5,25 @@ const Promise = require('bluebird');
 const _ = require('lodash');
 const moment = require('moment');
 const async = require('async');
+const log4js = require('log4js');
 
 const Util = require('./Util.js'); // contains meta data
+log4js.configure({
+  appenders : [
+    { type : 'console', category : 'PRE' }
+  ]
+});
+const logger = log4js.getLogger('PRE');
 const LogNode = require('./LogNode.js'); // used to store meta information for each log line in the log file
 const Window = require('./Window.js');
 const lineClassifier = require(Util.LINE_CLASSIFIER); // used to assign labels to data that will be used for training classifier
-const LOG_NAME = 'PRE: ';
-
-//const filePathTest = Util.FILE_PATH_TEST;
 const filePathTest = Util.LOG_FILE_PATH;
+
+// GLOBAL VARIABLES
 let hashMapKeyCounter = 1;
 let arrayOfSoftLockups = [];
 
-/** TODO
+/**
 *  Reads logs from a specified log file and returns an Object containing the training data that can be used to train a classifier.
 *
 *  @param  {String}
@@ -34,9 +40,10 @@ const preprocessor = (logFilePath) => {
       const outstream = new stream;
       const readLine = readline.createInterface(instream, outstream);
 
-      console.log(LOG_NAME + "Inside processing file.");
+      logger.trace("Entering preprocessing module.");
 
       let logNodeHashmap = {}; // will hold all the LogNodes created for each line in the log file
+      let arrayOfWindows = [];
 
       // Reads in a single line from the log file, creates a LogNode and pushes it to an array containing all the LogNodes
       readLine.on('line', (line) => {
@@ -47,29 +54,31 @@ const preprocessor = (logFilePath) => {
       });
 
       readLine.on('close', () => {
-        console.log(LOG_NAME + "Finished reading file.");
+        logger.trace("Finished reading from log file.");
+        logger.info("Number of lines read: " + Object.keys(logNodeHashmap).length);
 
         applyClassification(logNodeHashmap)
         .then ( (arrayOfSoftLockups) => {
           //hashmapWithLabels = classificationResult.hashmap;
           // console.log(logNodeHashmap);
           console.log(arrayOfSoftLockups);
-          return findBadWindows(arrayOfSoftLockups, logNodeHashmap);
+          return findBadWindows(arrayOfSoftLockups, logNodeHashmap, arrayOfWindows);
         })
         .then ( (arrayOfWindows) => {
-          console.log("arrayOfWindows: ");
+          logger.info("arrayOfWindows: ");
+          console.log(arrayOfWindows);
           //console.log(arrayOfWindows[175366]);
           //console.log(_.find(arrayOfWindows, (window) => { return window.label === 'B_WINDOW'; }));
         })
         .error ( (err) => {
-          console.log(LOG_NAME + err);
+          //console.log(LOG_NAME + err);
         })
 
         resolve(logNodeHashmap);
       });
 
       readLine.on('error', (err) => {
-        console.log(LOG_NAME + "Error whilst reading log file.");
+        logger.error("Error whilst reading log file.");
       })
     });
 
@@ -78,11 +87,10 @@ const preprocessor = (logFilePath) => {
 };
 
 const findBadWindows
- = (arrayOfSoftLockups, logNodeHashmap) => {
-  console.log(LOG_NAME + "Beginning search for windows.");
+ = (arrayOfSoftLockups, logNodeHashmap, arrayOfWindows) => {
+  //console.log(LOG_NAME + "Beginning search for windows.");
   return new Promise( (resolve, reject) => {
     const numOfSoftLocks = arrayOfSoftLockups.length;
-    let arrayOfWindows = [];
 
     // TODO: Maybe use async here to speed things up
     for (let x = numOfSoftLocks - 1; x >= 0; x--){
@@ -99,26 +107,29 @@ const findBadWindows
         if (timeDiff > 3){
           let lastNodeOfWindow = logNodeHashmap[y+1];
           let windowLabel = (lastNodeOfWindow.label === 'G') ? 'G_WINDOW' : 'B_WINDOW';
-          arrayOfWindows.push(new Window(mNodeIndex, sequenceOfLabels, windowLabel));
+          let logWindow = new Window(mNodeIndex, sequenceOfLabels, windowLabel);
+          arrayOfWindows.push(logWindow);
           stopSearch = true;
+          //if (windowLabel == 'B_WINDOW') console.log(LOG_NAME + "BAD WINDOW");
+          //console.log(logWindow);
         } else {
           sequenceOfLabels += sNode.label;
         }
       }
     }
-    console.log(LOG_NAME + "Finished search for windows.");
+    //console.log(LOG_NAME + "Finished search for windows.");
     resolve(arrayOfWindows);
   });
 }
 
 const applyClassification = (logNodeHashmap) => {
-  console.log(LOG_NAME + "Applying classification to logs.");
+  logger.trace("Applying classification to logs.");
   return new Promise ( (resolve, reject) => {
     async.each(logNodeHashmap, getLogClassification, (err) => {
       if (err){
-        reject(LOG_NAME + "Error assigning class to log nodes.");
+        logger.error("Error assigning class to log nodes.");
       } else {
-        console.log(LOG_NAME + "Successfully assigned class to log nodes.");
+        logger.trace("Successfully assigned class to log nodes.");
         resolve(arrayOfSoftLockups);
       }
     });

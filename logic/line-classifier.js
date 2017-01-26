@@ -4,33 +4,30 @@ const readline = require('readline');
 const stream = require('stream');
 const async = require('async');
 const Util = require('./Util.js');
-
-const LOG_NAME = 'LINE_CLASSIFIER: ';
+const log4js = require('log4js');
+log4js.configure({
+  appenders : [
+    { type : 'console', category : 'L_CLASSIFIER' }
+  ]
+});
+const logger = log4js.getLogger('L_CLASSIFIER');
 
 const negativeWords = [
   'error',
   'failed',
+  'error_exit'
 ];
 
-
-// TODO: Swap forEach for async.each
-const classify = (logNode) => {
+const newClassify = (logNode) => {
   let label = 'G';
-  const arrayOfWords = cleanLine(logNode.message);
-  //const test = logNode.message.replace(/\s+/g, ' ');
+  let message = logNode.message;
 
-  _.forEach(arrayOfWords, (word) => {
-    _.forEach(negativeWords, (negativeWord) => {
-      if (word.toLowerCase().includes(negativeWord)){
-        label = 'B';
-      }
-      if (word.toLowerCase().includes("lockup")) label = 'F'
-    });
-    // if (_.indexOf(negativeWords, _.lowerCase(word)) > -1) {
-    //   label = 'B';
-    // }
-  });
-  //console.log("Label: " + label);
+  for (let i = 0; i < negativeWords.length; i++){
+    let negativeWord = negativeWords[i];
+    if (message.includes(negativeWord)) label = 'B';
+  }
+  if (message.includes("soft lockup")) label = 'F';
+
   logNode.label = label;
   if (label === 'F') return {"error" : false, "nodeId" : logNode.id};
   else return {'error' : false, "nodeId" : null};
@@ -44,4 +41,4 @@ const removeMultipleSpaces = (line) => {
   return line.replace(/\s+/g, ' ');
 };
 
-exports.classifyLogLine = classify;
+exports.classifyLogLine = newClassify;
