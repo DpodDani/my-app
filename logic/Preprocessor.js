@@ -6,6 +6,7 @@ const moment = require('moment');
 const async = require('async');
 const log4js = require('log4js');
 log4js.configure( { appenders : [{type:'console',category:'PRE'}] } );
+const logUpdate = require('log-update')
 
 const Util = require('./Util.js');
 const logger = log4js.getLogger('PRE');
@@ -29,6 +30,7 @@ class Preprocessor {
     this.logFilePath = options.logFilePath || Util.FILE_PATH_TEST;
     this.hashMapKeyCounter = options.counterStart || 1;
     this.arrayOfSoftLockups = options.arrayOfSoftLockups || [];
+    this.noOfLogs = options.noOfLogs || 0;
   }
 
   /**
@@ -61,7 +63,8 @@ class Preprocessor {
 
         readLine.on('close', () => {
           logger.trace("Finished reading file and populating hashmap");
-          logger.info("Number of LogNodes: " + Object.keys(this.logNodeHashmap).length);
+          this.noOfLogs = Object.keys(this.logNodeHashmap).length;
+          logger.info("Number of LogNodes: " + this.noOfLogs);
           logger.info("Array of soft lockups: " + this.arrayOfSoftLockups.length);
 
           // // displays the timestamps of the soft lockups
@@ -84,54 +87,79 @@ class Preprocessor {
    */
   getArrayOfWindows() {
 
+    logger.trace("Now obtaining windows of size: " + this.windowSize + " hours");
+
+    let arrayOfWindows = [];
+    const windowSize = this.windowSize;
+
     return new Promise( (resolve, reject) => {
-      const windowSize = this.windowSize; // in hours
-      const noOfSoftLockups = this.arrayOfSoftLockups.length;
-      const noOfLogNodes = Object.keys(this.logNodeHashmap).length;
 
-      logger.trace("Getting array of windows of size: " + windowSize + " hours");
-
-      for (let arrayIndex = 0; arrayIndex < noOfSoftLockups; arrayIndex++){
-        let primaryIndex = this.arrayOfSoftLockups[arrayIndex];
-        let primaryNode = this.logNodeHashmap[primaryIndex];
-        // logger.info("Primary index: " + primaryIndex);
-        // logger.info("Primary node: " + primaryNode);
-        let primaryTime = primaryNode.getTimestamp();
-        let sequenceOfLabels = ''; // Does not include the F label
-        let stopSearch = false;
-
-        for (let secondaryIndex = primaryIndex + 1; (secondaryIndex <= noOfLogNodes) && (!stopSearch); secondaryIndex++){
-          let secondaryNode = this.logNodeHashmap[secondaryIndex];
-          let secondaryTime = secondaryNode.getTimestamp();
-          let timeDiff = moment.duration(secondaryTime.diff(primaryTime)).asHours();
-
-          if (timeDiff > windowSize){
-            // label window
-            let logWindow = new Window(primaryIndex, sequenceOfLabels/*, SOME LABEL */)
-            this.arrayOfWindows.push(logWindow);
-            if (secondaryTime < ) stopSearch = true;
-          } else {
-            if (secondaryNode.getLabel() === 'F'){
-              sequenceOfLabels = '';
-              arrayIndex++;
-            } else {
-              sequenceOfLabels += secondaryNode.getLabel();
-            }
-          }
-
-        }
-
+      for (let index = 1; index <= this.noOfLogs; index++){
+        let result = this.collectWindows(index);
+        arrayOfWindows.push(new Window(
+          index,
+          result.sequenceOfLabels,
+          result.noOfGs,
+          result.noOfBs,
+          result.noOfFs,
+          (result.noOfGs > result.noOfBs) ? 'G_WINDOW' : 'B_WINDOW'
+        ));
+        index = result.lastNodeIndex;
       }
-      logger.trace("Windows found: " + this.arrayOfWindows.length);
-      logger.info(this.arrayOfWindows);
-      resolve(this.arrayOfWindows);
+      logger.info("Number of windows: " + arrayOfWindows.length);
+      for (let i = 0; i < arrayOfWindows.length; i++){
+        if (arrayOfWindows[i].getWindowLabel() === 'B_WINDOW') console.log("Label certainty: " + arrayOfWindows[i].getLabelCertainty());
+      }
+      // logger.info("Third window: ");
+      // logger.info(arrayOfWindows[3]);
+      resolve(arrayOfWindows);
     });
 
   }
 
+  /**
+   *  Iterates through the arrayOfSoftLockups to find windows that caused them. It will also find other windows existing between 2 soft lockups
+   *
+   *  @return {Array} An array of windows of size windowSize
+   */
+  collectWindows(startIndex) {
+
+    //logger.trace("Collecting windows of size: " + this.windowSize);
+
+    let startNode = this.logNodeHashmap[startIndex];
+    let startTime = startNode.getTimestamp();
+    let sequenceOfLabels = '';
+    let stopSearch = false;
+    let noOfBs = 0;
+    let noOfGs = 0;
+    let noOfFs = 0;
+
+    for (let index = startIndex; index <= this.noOfLogs && !stopSearch; index++){
+      logUpdate("Progress: " + ((index/this.noOfLogs) * 100).toFixed(1) + "%");
+      let nextNode = this.logNodeHashmap[index];
+      let label = nextNode.getLabel();
+      sequenceOfLabels += label;
+      switch(label){
+        case 'B': noOfBs++; break;
+        case 'G': noOfGs++; break;
+        case 'F': noOfFs++; break;
+      }
+      if (nextNode.getTimeDifference(startTime) > this.windowSize) stopSearch = true;
+      else startIndex++;
+    }
+
+    return {
+      "sequenceOfLabels" : sequenceOfLabels,
+      "lastNodeIndex" : startIndex,
+      "noOfGs" : noOfGs,
+      "noOfBs" : noOfBs,
+      "noOfFs" : noOfFs
+    };
+  }
+
 }
 
-pre = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 0.3});
+pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 1});
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();
