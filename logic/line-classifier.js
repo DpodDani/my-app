@@ -4,23 +4,16 @@ const readline = require('readline');
 const stream = require('stream');
 const async = require('async');
 const Util = require('./Util.js');
-const log4js = require('log4js');
-log4js.configure({
-  appenders : [
-    { type : 'console', category : 'L_CLASSIFIER' }
-  ]
-});
-const logger = log4js.getLogger('L_CLASSIFIER');
 
 const negativeWords = [
   'error',
   'failed',
-  'error_exit'
+  'segfault'
 ];
 
-const newClassify = (logNode) => {
+const classifyLine = (logNode) => {
   let label = 'G';
-  let message = logNode.message;
+  let message = logNode.message.toLowerCase();
 
   for (let i = 0; i < negativeWords.length; i++){
     let negativeWord = negativeWords[i];
@@ -41,4 +34,4 @@ const removeMultipleSpaces = (line) => {
   return line.replace(/\s+/g, ' ');
 };
 
-exports.classifyLogLine = newClassify;
+exports.classifyLogLine = classifyLine;

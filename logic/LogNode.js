@@ -1,3 +1,5 @@
+const moment = require('moment');
+
 /**
  *  This class will act as a container for each log line that is read from the log file.
  *
@@ -7,27 +9,33 @@
  */
 class LogNode {
 
-  constructor(id, message, timestamp) {
-    this.id = id;
+  constructor(message, timestamp, jobId, label) {
     this.message = message;
     this.timestamp = timestamp;
+    this.jobId = jobId;
+    this.label = label;
   }
 
   getTimestamp() {
     return this.timestamp;
   }
 
-  getLogMessage() {
-    return this.logMessage;
+  getMessage() {
+    return this.message;
   }
 
-  setLabel(label) {
-    this.label = label;
+  getJobId() {
+    return this.jobId;
   }
 
   getLabel() {
     return this.label || null;
   }
+
+  getTimeDifference(logNodeTS) {
+      return moment.duration(this.timestamp.diff(logNodeTS)).asHours();
+  }
+
 }
 
 module.exports = LogNode;
