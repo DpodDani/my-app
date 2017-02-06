@@ -19,7 +19,7 @@ class LogNode {
     this.label = label;
   }
 
-  getLineNum() {
+  getLineNo() {
     return this.lineNo;
   }
 

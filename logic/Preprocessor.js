@@ -180,7 +180,7 @@ class Preprocessor {
 
 }
 
-pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 1});
+pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 1});
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();

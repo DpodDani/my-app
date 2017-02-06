@@ -13,7 +13,7 @@ class LineClassifier {
     ];
   }
 
-  createLogNode(line) {
+  createLogNode(line, lineNo) {
     let label = 'G';
     const timestamp = this.getTimestamp(line);
     const jobId = this.getJobId(line);
@@ -26,7 +26,7 @@ class LineClassifier {
     }
     if (message.includes("soft lockup")) label = 'F';
 
-    return new LogNode(line, timestamp, jobId, label);
+    return new LogNode(lineNo, line, timestamp, jobId, label);
   }
 
   getTimestamp(line) {
