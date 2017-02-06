@@ -17,15 +17,15 @@ class Window {
     }
   }
 
-  getLabelCertainty() {
-    if (this.label == 'G_WINDOW') {
-      return ((this.noOfGs / (this.noOfGs + this.noOfBs + this.noOfFs)) * 100).toFixed(1) + "%";
-    } else if (this.label == 'B_WINDOW') {
-      return ((this.noOfBs / (this.noOfGs + this.noOfBs + this.noOfFs)) * 100).toFixed(1) + "%";
-    } else {
-      return 0;
-    }
-  }
+  // getLabelCertainty() {
+  //   if (this.label == 'G_WINDOW') {
+  //     return ((this.noOfGs / (this.noOfGs + this.noOfBs + this.noOfFs)) * 100).toFixed(1) + "%";
+  //   } else if (this.label == 'B_WINDOW') {
+  //     return ((this.noOfBs / (this.noOfGs + this.noOfBs + this.noOfFs)) * 100).toFixed(1) + "%";
+  //   } else {
+  //     return 0;
+  //   }
+  // }
 
   getSequence() {
     return this.sequenceOfLabels;
@@ -35,7 +35,7 @@ class Window {
     return this.nodeId;
   }
 
-  getWindowLabel() {
+  getLabel() {
     return this.label;
   }
 
