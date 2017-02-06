@@ -56,7 +56,7 @@ class Preprocessor {
         // Creates an LogNode for the log line being read from the log file
         // Line labelling is handled by the line classifier
         readLine.on('line', (line) => {
-          let logNode = lineClassifier.createLogNode(line);
+          let logNode = lineClassifier.createLogNode(line, this.hashMapKeyCounter);
           if (logNode.getLabel() === 'F') this.arrayOfSoftLockups.push(this.hashMapKeyCounter);
           this.logNodeHashmap[this.hashMapKeyCounter++] = logNode;
         });
@@ -107,9 +107,14 @@ class Preprocessor {
         index = result.lastNodeIndex;
       }
       logger.info("Number of windows: " + arrayOfWindows.length);
+
       for (let i = 0; i < arrayOfWindows.length; i++){
-        if (arrayOfWindows[i].getWindowLabel() === 'B_WINDOW') console.log("Label certainty: " + arrayOfWindows[i].getLabelCertainty());
+        let noOfFs = arrayOfWindows[i].getLabelFreq('F');
+        let noOfBs = arrayOfWindows[i].getLabelFreq('B');
+        let noOfGs = arrayOfWindows[i].getLabelFreq('G');
+        if (noOfFs > 0) logger.info("Window at: " + i + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
       }
+
       // logger.info("Third window: ");
       // logger.info(arrayOfWindows[3]);
       resolve(arrayOfWindows);
@@ -129,24 +134,40 @@ class Preprocessor {
     let startNode = this.logNodeHashmap[startIndex];
     let startTime = startNode.getTimestamp();
     let sequenceOfLabels = '';
+    let secondarySequence = ''; // once an F is encountered, any further occurrences of Fs will result in some deletion from the sequence of labels
     let stopSearch = false;
     let noOfBs = 0;
     let noOfGs = 0;
     let noOfFs = 0;
+    let seenF = false;
 
     for (let index = startIndex; index <= this.noOfLogs && !stopSearch; index++){
       logUpdate("Progress: " + ((index/this.noOfLogs) * 100).toFixed(1) + "%");
       let nextNode = this.logNodeHashmap[index];
       let label = nextNode.getLabel();
-      sequenceOfLabels += label;
-      switch(label){
-        case 'B': noOfBs++; break;
-        case 'G': noOfGs++; break;
-        case 'F': noOfFs++; break;
+
+      // switch(label){
+      //   case 'B': noOfBs++; break;
+      //   case 'G': noOfGs++; break;
+      //   case 'F': noOfFs++; break;
+      // }
+      if (nextNode.getTimeDifference(startTime) > this.windowSize) {
+        stopSearch = true;
+      } else {
+        if (seenF) secondarySequence += label;
+        else sequenceOfLabels += label;
+        if (label === 'F') {
+          secondarySequence = '';
+          seenF = true;
+        }
+        startIndex++;
       }
-      if (nextNode.getTimeDifference(startTime) > this.windowSize) stopSearch = true;
-      else startIndex++;
     }
+
+    sequenceOfLabels += secondarySequence;
+    noOfBs = (sequenceOfLabels.match(/B/g)) ? sequenceOfLabels.match(/B/g).length : 0;
+    noOfGs = (sequenceOfLabels.match(/G/g)) ? sequenceOfLabels.match(/G/g).length : 0;
+    noOfFs = (sequenceOfLabels.match(/F/g)) ? sequenceOfLabels.match(/F/g).length : 0;
 
     return {
       "sequenceOfLabels" : sequenceOfLabels,
