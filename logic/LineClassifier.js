@@ -7,9 +7,10 @@ class LineClassifier {
   constructor() {
     this.negativeWords = [
       'error',
-      'failed',
+      'fail',
       'segfault',
-      'overflow'
+      'overflow',
+      'lost'
     ];
   }
 
