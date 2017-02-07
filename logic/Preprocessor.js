@@ -112,7 +112,7 @@ class Preprocessor {
         let noOfFs = arrayOfWindows[i].getLabelFreq('F');
         let noOfBs = arrayOfWindows[i].getLabelFreq('B');
         let noOfGs = arrayOfWindows[i].getLabelFreq('G');
-        if (noOfFs > 0) logger.info("Window at: " + i + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
+        logger.info("Window at: " + i + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
       }
 
       // logger.info("Third window: ");
@@ -180,7 +180,7 @@ class Preprocessor {
 
 }
 
-pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 1});
+pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();
