@@ -39,8 +39,8 @@ class LogNode {
     return this.label || null;
   }
 
-  getTimeDifference(logNodeTS) {
-      return moment.duration(this.timestamp.diff(logNodeTS)).asHours();
+  getTimeDifference(logNode) {
+      return moment.duration(this.timestamp.diff(logNode.getTimestamp())).asHours();
   }
 
 }
