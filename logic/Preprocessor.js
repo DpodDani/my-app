@@ -101,7 +101,7 @@ class Preprocessor {
       for (let index = 1; index <= this.noOfLogs; index++){
         let result = this.collectWindows(index);
         arrayOfWindows.push(new Window(
-          index,
+          result.startIndex,
           result.sequenceOfLabels,
           result.noOfGs,
           result.noOfBs,
@@ -116,7 +116,8 @@ class Preprocessor {
         let noOfFs = arrayOfWindows[i].getLabelFreq('F');
         let noOfBs = arrayOfWindows[i].getLabelFreq('B');
         let noOfGs = arrayOfWindows[i].getLabelFreq('G');
-        logger.info("Window at: " + i + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
+        let startLine = arrayOfWindows[i].getStartId();
+        logger.info("Window starting at line: " + this.logNodeHashmap[startLine].getLineNo() + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
       }
 
       // logger.info("Third window: ");
@@ -137,6 +138,7 @@ class Preprocessor {
 
     let startNode = this.logNodeHashmap[startIndex];
     let startTime = startNode.getTimestamp();
+    let newStart = startIndex; // used in case an F appears and readjusts the starting point of the window
     let sequenceOfLabels = '';
     let secondarySequence = ''; // once an F is encountered, any further occurrences of Fs will result in some deletion from the sequence of labels
     let stopSearch = false;
@@ -156,6 +158,12 @@ class Preprocessor {
         if (seenF) secondarySequence += label;
         else sequenceOfLabels += label;
         if (label === 'F') {
+          // if an F appears (and has NOT been previously seen), the window algorithm restarts at the F node and begins to look for a Window from this point onwards
+          if (!seenF){
+            sequenceOfLabels = label;
+            startNode = nextNode;
+            newStart = index;
+          }
           secondarySequence = '';
           seenF = true;
         }
@@ -169,6 +177,7 @@ class Preprocessor {
     noOfFs = (sequenceOfLabels.match(/F/g)) ? sequenceOfLabels.match(/F/g).length : 0;
 
     return {
+      "startIndex" : newStart,
       "sequenceOfLabels" : sequenceOfLabels,
       "lastNodeIndex" : startIndex,
       "noOfGs" : noOfGs,
@@ -193,7 +202,7 @@ class Preprocessor {
 
 }
 
-pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
+pre = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2});
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();
