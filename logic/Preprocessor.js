@@ -127,9 +127,9 @@ class Preprocessor {
   }
 
   /**
-   *  Iterates through the arrayOfSoftLockups to find windows that caused them. It will also find other windows existing between 2 soft lockups
+   *  Iterates through the hashmap from the starting index provided in the argument and returns a single window of size specified by the windowSize variable.
    *
-   *  @return {Array} An array of windows of size windowSize
+   *  @return {Integer} The starting index of the window
    */
   collectWindows(startIndex) {
 
