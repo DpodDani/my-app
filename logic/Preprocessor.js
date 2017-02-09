@@ -31,6 +31,7 @@ class Preprocessor {
     this.hashMapKeyCounter = options.counterStart || 1;
     this.arrayOfSoftLockups = options.arrayOfSoftLockups || [];
     this.noOfLogs = options.noOfLogs || 0;
+    this.reversedHashmap = false;
   }
 
   /**
@@ -66,6 +67,9 @@ class Preprocessor {
           this.noOfLogs = Object.keys(this.logNodeHashmap).length;
           logger.info("Number of LogNodes: " + this.noOfLogs);
           logger.info("Array of soft lockups: " + this.arrayOfSoftLockups.length);
+          logger.trace("Reversing hashmap");
+          this.reverseHashmap();
+          logger.trace("Hashmap has been reversed");
 
           // // displays the timestamps of the soft lockups
           // for (let x = 0; x < this.arrayOfSoftLockups.length; x++){
@@ -146,12 +150,7 @@ class Preprocessor {
       let nextNode = this.logNodeHashmap[index];
       let label = nextNode.getLabel();
 
-      // switch(label){
-      //   case 'B': noOfBs++; break;
-      //   case 'G': noOfGs++; break;
-      //   case 'F': noOfFs++; break;
-      // }
-      if (nextNode.getTimeDifference(startTime) > this.windowSize) {
+      if (startNode.getTimeDifference(nextNode) > this.windowSize) {
         stopSearch = true;
       } else {
         if (seenF) secondarySequence += label;
@@ -176,6 +175,20 @@ class Preprocessor {
       "noOfBs" : noOfBs,
       "noOfFs" : noOfFs
     };
+  }
+
+  reverseHashmap() {
+    let keys = Object.keys(this.logNodeHashmap);
+    let rKeys = keys.reverse();
+    let rHashmap = {};
+    let counter = 1;
+
+    for (let key in rKeys){
+      let index = rKeys[key];
+      rHashmap[counter++] = this.logNodeHashmap[index];
+    }
+
+    this.logNodeHashmap = rHashmap;
   }
 
 }
