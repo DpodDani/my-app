@@ -1,7 +1,7 @@
 class Window {
 
-  constructor(nodeId, sequenceOfLabels, noOfGs, noOfBs, noOfFs,label) {
-    this.nodeId = nodeId;
+  constructor(startId, sequenceOfLabels, noOfGs, noOfBs, noOfFs,label) {
+    this.startId = startId;
     this.sequenceOfLabels = sequenceOfLabels;
     this.noOfGs = noOfGs;
     this.noOfBs = noOfBs;
@@ -31,8 +31,8 @@ class Window {
     return this.sequenceOfLabels;
   }
 
-  getNodeId() {
-    return this.nodeId;
+  getStartId() {
+    return this.startId;
   }
 
   getLabel() {
