@@ -40,7 +40,8 @@ class LogNode {
   }
 
   getTimeDifference(logNode) {
-      return moment.duration(this.timestamp.diff(logNode.getTimestamp())).asHours();
+    // returns = (this.timestamp - logNode.timestamp) represented in number of hours
+    return moment.duration(this.timestamp.diff(logNode.getTimestamp())).asHours();
   }
 
 }
