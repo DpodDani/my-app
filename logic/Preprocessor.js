@@ -16,9 +16,7 @@ const LineClassifier = require(Util.LINE_CLASSIFIER);
 
 const DEFAULT_WINDOW_SIZE = 2;
 
-// TODO: Continue looking for windows after window size has been reached in between 2 Fs
 // TODO: Implement algorithm for classifying windows (by majority of particular label)
-// TODO: Construct windows in opposite direction to time flow
 
 class Preprocessor {
 
@@ -112,13 +110,16 @@ class Preprocessor {
       }
       logger.info("Number of windows: " + arrayOfWindows.length);
 
-      for (let i = 0; i < arrayOfWindows.length; i++){
-        let noOfFs = arrayOfWindows[i].getLabelFreq('F');
-        let noOfBs = arrayOfWindows[i].getLabelFreq('B');
-        let noOfGs = arrayOfWindows[i].getLabelFreq('G');
-        let startLine = arrayOfWindows[i].getStartId();
-        logger.info("Window starting at line: " + this.logNodeHashmap[startLine].getLineNo() + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
-      }
+      // for (let i = 0; i < arrayOfWindows.length; i++){
+      //   let noOfFs = arrayOfWindows[i].getLabelFreq('F');
+      //   let noOfBs = arrayOfWindows[i].getLabelFreq('B');
+      //   let noOfGs = arrayOfWindows[i].getLabelFreq('G');
+      //   let startLine = arrayOfWindows[i].getStartId();
+      //   logger.info("Window starting at line: " + this.logNodeHashmap[startLine].getLineNo() + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
+      // }
+
+      logger.info("Window 5 label sequence: " + arrayOfWindows[4].getSequence());
+      logger.info("Window 6 label sequence: " + arrayOfWindows[5].getSequence());
 
       // logger.info("Third window: ");
       // logger.info(arrayOfWindows[3]);
@@ -202,7 +203,7 @@ class Preprocessor {
 
 }
 
-pre = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2});
+pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();
