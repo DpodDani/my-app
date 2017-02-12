@@ -5,7 +5,14 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const async = require('async');
 const log4js = require('log4js');
-log4js.configure( { appenders : [{type:'console',category:'PRE'}] } );
+log4js.configure(
+  {
+    appenders : [
+      {type:'console',category:'PRE'},
+      {type:'console',category:'NB'}
+    ]
+  }
+);
 const logUpdate = require('log-update')
 
 const Util = require('./Util.js');
@@ -13,6 +20,7 @@ const logger = log4js.getLogger('PRE');
 const LogNode = require(Util.LOG_NODE);
 const Window = require(Util.WINDOW);
 const LineClassifier = require(Util.LINE_CLASSIFIER);
+const NaiveBayes = require(Util.NAIVEBAYES);
 
 const DEFAULT_WINDOW_SIZE = 2;
 
@@ -30,6 +38,7 @@ class Preprocessor {
     this.arrayOfSoftLockups = options.arrayOfSoftLockups || [];
     this.noOfLogs = options.noOfLogs || 0;
     this.reversedHashmap = false;
+    logger.trace("Successfully initialised Preprocessor");
   }
 
   /**
@@ -118,11 +127,6 @@ class Preprocessor {
       //   logger.info("Window starting at line: " + this.logNodeHashmap[startLine].getLineNo() + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
       // }
 
-      logger.info("Window 5 label sequence: " + arrayOfWindows[4].getSequence());
-      logger.info("Window 6 label sequence: " + arrayOfWindows[5].getSequence());
-
-      // logger.info("Third window: ");
-      // logger.info(arrayOfWindows[3]);
       resolve(arrayOfWindows);
     });
 
@@ -207,6 +211,12 @@ pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2})
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();
+  })
+  .then ( (arrayOfWindows) => {
+    const naiveBayes = new NaiveBayes({"logger" : log4js});
+    for (let i = 0; i < arrayOfWindows.length; i++){
+      naiveBayes.train(arrayOfWindows[i], 'G_WINDOW');
+    }
   });
 
 module.exports = Preprocessor;
