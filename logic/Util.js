@@ -5,6 +5,7 @@ module.exports = {
   "MAR11_FILE_PATH" : __dirname + "/../public/files/Mar11",
   "FILE_PATH_TEST" : __dirname + "/../public/files/test.txt",
   "PREPROCESSOR" : "./Preprocessor.js",
+  "NAIVEBAYES" : "./NaiveBayes.js",
   "LINE_CLASSIFIER" : "./LineClassifier.js",
   "LOG_NODE" : "./LogNode.js",
   "WINDOW" : "./Window.js"
