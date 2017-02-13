@@ -39,6 +39,10 @@ class Window {
     return this.label;
   }
 
+  setLabel(label) {
+    this.label = label;
+  }
+
 }
 
 module.exports = Window;
