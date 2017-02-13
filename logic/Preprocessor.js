@@ -127,6 +127,7 @@ class Preprocessor {
       //   logger.info("Window starting at line: " + this.logNodeHashmap[startLine].getLineNo() + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
       // }
 
+      this.arrayOfWindows = arrayOfWindows;
       resolve(arrayOfWindows);
     });
 
@@ -205,6 +206,28 @@ class Preprocessor {
     this.logNodeHashmap = rHashmap;
   }
 
+  classifyWindows() {
+    return new Promise( (resolve, reject) => {
+      const arrayOfWindows = this.arrayOfWindows;
+
+      for (let i = 0; i < arrayOfWindows.length; i++){
+        arrayOfWindows[i] = this.getWindowClass(arrayOfWindows[i]);
+      }
+
+      this.arrayOfWindows = arrayOfWindows;
+      resolve(arrayOfWindows);
+    });
+  }
+
+  getWindowClass(logWindow) {
+    const THRESHOLD = 0.8;
+    const noOfBs = logWindow.getLabelFreq('B');
+    const noOfGs = logWindow.getLabelFreq('G');
+    const windowLabel = (noOfGs > THRESHOLD * noOfBs) ? 'G_WINDOW' : 'B_WINDOW';
+    logWindow.setLabel(windowLabel);
+    return logWindow;
+  }
+
 }
 
 pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
@@ -213,9 +236,13 @@ pre.createLogNodeHashmap()
     return pre.getArrayOfWindows();
   })
   .then ( (arrayOfWindows) => {
+    return pre.classifyWindows();
+  })
+  .then ( (arrayOfClassifiedWindows) => {
     const naiveBayes = new NaiveBayes({"logger" : log4js});
+    const arrayOfWindows = arrayOfClassifiedWindows;
     for (let i = 0; i < arrayOfWindows.length; i++){
-      naiveBayes.train(arrayOfWindows[i], 'G_WINDOW');
+      naiveBayes.train(arrayOfWindows[i]);
     }
   });
 
