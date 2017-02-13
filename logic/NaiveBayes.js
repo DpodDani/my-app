@@ -14,6 +14,7 @@ class NaiveBayes {
 
   // TODO: Set NaiveBayes option object in route.js
   // TODO: Sequence of labels should represent their Window
+
   /**
    *  Sets up the necessary hashmaps and frequency tables to perform Naive bayes algorithm.
    *
@@ -57,8 +58,9 @@ class NaiveBayes {
     }
   }
 
-  train(logWindow, category) {
+  train(logWindow) {
     logger.trace("Training with new information");
+    const category = logWindow.getLabel();
     this.initialiseCategory(category);
     this.countWinInCategory[category]++; // update total number of windows mapped to a particular category
     this.totalWindows++; // update total number of windows we have seen
@@ -84,6 +86,26 @@ class NaiveBayes {
     logger.info("Total number of windows processed: " + this.totalWindows);
     logger.info("Number of windows mapped to " + category + ": " + this.countWinInCategory[category]);
     logger.info("Number of times this window has been mapped to " + category + ": " + this.winFreqInCategory[category][sequenceOfLabels]);
+  }
+
+  getWindowProb(logWindow) {
+    const sequenceOfLabels = logWindow.getSequence();
+    const occurrences = this.windowFreq[sequenceOfLabels];
+    return occurrences / this.totalWindows;
+  }
+
+  getCategoryProb(category) {
+    // this.countWinInCategory essentially indicates how many times a particular category has been seen
+    return this.countWinInCategory[category] / this.totalWindows;
+  }
+
+  classify(logWindow) {
+    const sequenceOfLabels = logWindow.getSequence();
+    const categoryOccurrences = this.countWinInCategory[category];
+    const winFreqInCategory = this.winFreqInCategory[category][sequenceOfLabels];
+
+    const likelihood = winFreqInCategory / categoryOccurrences;
+    const classPosteriorProb = ;
   }
 
   /**
