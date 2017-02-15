@@ -3,7 +3,7 @@ const readline = require('readline');
 const stream = require('stream');
 const Promise = require('bluebird');
 const moment = require('moment');
-const async = require('async');
+const bayes = require('node-bayes');
 const log4js = require('log4js');
 log4js.configure(
   {
@@ -20,7 +20,7 @@ const logger = log4js.getLogger('PRE');
 const LogNode = require(Util.LOG_NODE);
 const Window = require(Util.WINDOW);
 const LineClassifier = require(Util.LINE_CLASSIFIER);
-const NaiveBayes = require(Util.NAIVEBAYES);
+// const NaiveBayes = require(Util.NAIVEBAYES);
 
 const DEFAULT_WINDOW_SIZE = 2;
 
@@ -118,14 +118,6 @@ class Preprocessor {
         index = result.lastNodeIndex;
       }
       logger.info("Number of windows: " + arrayOfWindows.length);
-
-      // for (let i = 0; i < arrayOfWindows.length; i++){
-      //   let noOfFs = arrayOfWindows[i].getLabelFreq('F');
-      //   let noOfBs = arrayOfWindows[i].getLabelFreq('B');
-      //   let noOfGs = arrayOfWindows[i].getLabelFreq('G');
-      //   let startLine = arrayOfWindows[i].getStartId();
-      //   logger.info("Window starting at line: " + this.logNodeHashmap[startLine].getLineNo() + " contains: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs");
-      // }
 
       this.arrayOfWindows = arrayOfWindows;
       resolve(arrayOfWindows);
@@ -228,9 +220,44 @@ class Preprocessor {
     return logWindow;
   }
 
+  getTrainingData() {
+    let TRAINING_DATA = [];
+    for (let i = 0; i < this.arrayOfWindows.length; i++){
+      let DATA = [
+        this.arrayOfWindows[i].getLabelFreq('B'),
+        this.arrayOfWindows[i].getLabelFreq('G'),
+        this.arrayOfWindows[i].getLabelFreq('F'),
+        this.arrayOfWindows[i].getLabel()
+      ];
+      TRAINING_DATA.push(DATA);
+    }
+    return TRAINING_DATA;
+  }
+
+  printArrayOfWindows() {
+    const arrayOfWindows = this.arrayOfWindows;
+    for (let i = 0; i < arrayOfWindows.length; i++){
+      let noOfFs = arrayOfWindows[i].getLabelFreq('F');
+      let noOfBs = arrayOfWindows[i].getLabelFreq('B');
+      let noOfGs = arrayOfWindows[i].getLabelFreq('G');
+      let startLine = arrayOfWindows[i].getStartId();
+      let windowLabel = arrayOfWindows[i].getLabel();
+      logger.info("Window containing: (" + noOfFs + ") Fs, (" + noOfGs + ") Gs, (" + noOfBs + ") Bs, labelled: " + windowLabel);
+    }
+  }
+
+  // writeWindowsToFile(filePath){
+  //   for (let i = 0; i < this.arrayOfWindows.length; i++){
+  //     let myWindow = this.arrayOfWindows[i];
+  //     let message = "Window label: " + myWindow.getLabel() + ", noOfBs: " + myWindow.getLabelFreq('B');
+  //   }
+  //   fs.writeFileSync(filePath, data, 'utf8');
+  // }
+
 }
 
-pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
+
+pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2});
 pre.createLogNodeHashmap()
   .then ( (result) => {
     return pre.getArrayOfWindows();
@@ -239,11 +266,25 @@ pre.createLogNodeHashmap()
     return pre.classifyWindows();
   })
   .then ( (arrayOfClassifiedWindows) => {
-    const naiveBayes = new NaiveBayes({"logger" : log4js});
+    // const naiveBayes = new NaiveBayes({"logger" : log4js});
+    pre.printArrayOfWindows();
     const arrayOfWindows = arrayOfClassifiedWindows;
-    for (let i = 0; i < arrayOfWindows.length; i++){
-      naiveBayes.train(arrayOfWindows[i]);
-    }
+    const TRAINING_COLUMNS = ['NO_OF_Bs', 'NO_OF_Gs', 'NO_OF_Fs', 'CATEGORY'];
+    const TRAINING_DATA = pre.getTrainingData();
+    const classifier = new bayes.NaiveBayes({
+      columns : TRAINING_COLUMNS,
+      data : TRAINING_DATA,
+      verbose: true
+    });
+    classifier.train();
+    //logger.info(pre.arrayOfWindows[0]);
+    const pred = classifier.predict([
+      pre.arrayOfWindows[0].getLabelFreq('B'),
+      pre.arrayOfWindows[0].getLabelFreq('G'),
+      pre.arrayOfWindows[0].getLabelFreq('F')
+    ]);
+    logger.info(pred);
+
   });
 
 module.exports = Preprocessor;
