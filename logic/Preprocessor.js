@@ -3,7 +3,7 @@ const readline = require('readline');
 const stream = require('stream');
 const Promise = require('bluebird');
 const moment = require('moment');
-const bayes = require('node-bayes');
+const svm = require('node-svm');
 const log4js = require('log4js');
 log4js.configure(
   {
@@ -30,6 +30,7 @@ class Preprocessor {
 
   constructor(options) {
     this.logNodeHashmap = options.logNodeHashmap || {}; // stores LogNodes for each log line in log file
+    logger.error("Size of lognodehashmap: " + Object.keys(this.logNodeHashmap).length);
     this.arrayOfSoftLockups = options.arrayOfSoftLockups|| []; // stores LogNode IDs where a soft lockup occurred
     this.arrayOfWindows = options.arrayOfWindows || []; // stores Windows generated from the log file(s)
     this.windowSize = options.windowSize || DEFAULT_WINDOW_SIZE;
@@ -37,7 +38,6 @@ class Preprocessor {
     this.hashMapKeyCounter = options.counterStart || 1;
     this.arrayOfSoftLockups = options.arrayOfSoftLockups || [];
     this.noOfLogs = options.noOfLogs || 0;
-    this.reversedHashmap = false;
     logger.trace("Successfully initialised Preprocessor");
   }
 
@@ -75,7 +75,6 @@ class Preprocessor {
           logger.info("Number of LogNodes: " + this.noOfLogs);
           logger.info("Array of soft lockups: " + this.arrayOfSoftLockups.length);
           logger.trace("Reversing hashmap");
-          this.reverseHashmap();
           logger.trace("Hashmap has been reversed");
 
           // // displays the timestamps of the soft lockups
@@ -137,7 +136,7 @@ class Preprocessor {
     let startNode = this.logNodeHashmap[startIndex];
     let startTime = startNode.getTimestamp();
     let newStart = startIndex; // used in case an F appears and readjusts the starting point of the window
-    let sequenceOfLabels = '';
+    let sequenceOfLabels = startNode.getLabel();
     let secondarySequence = ''; // once an F is encountered, any further occurrences of Fs will result in some deletion from the sequence of labels
     let stopSearch = false;
     let noOfBs = 0;
@@ -215,7 +214,8 @@ class Preprocessor {
     const THRESHOLD = 0.8;
     const noOfBs = logWindow.getLabelFreq('B');
     const noOfGs = logWindow.getLabelFreq('G');
-    const windowLabel = (noOfGs > THRESHOLD * noOfBs) ? 'G_WINDOW' : 'B_WINDOW';
+    const noOfFs = logWindow.getLabelFreq('F');
+    const windowLabel = ((noOfGs > THRESHOLD * noOfBs) && (noOfFs < 1)) ? 'G_WINDOW' : 'B_WINDOW';
     logWindow.setLabel(windowLabel);
     return logWindow;
   }
@@ -224,14 +224,20 @@ class Preprocessor {
     let TRAINING_DATA = [];
     for (let i = 0; i < this.arrayOfWindows.length; i++){
       let DATA = [
-        this.arrayOfWindows[i].getLabelFreq('B'),
-        this.arrayOfWindows[i].getLabelFreq('G'),
-        this.arrayOfWindows[i].getLabelFreq('F'),
-        this.arrayOfWindows[i].getLabel()
+        [
+          this.arrayOfWindows[i].getLabelFreq('B'),
+          this.arrayOfWindows[i].getLabelFreq('G'),
+          this.arrayOfWindows[i].getLabelFreq('F')
+        ],
+        (this.arrayOfWindows[i].getLabel() == 'G_WINDOW') ? 1 : 0
       ];
       TRAINING_DATA.push(DATA);
     }
     return TRAINING_DATA;
+  }
+
+  getLogNodeHashmap() {
+    return this.logNodeHashmap;
   }
 
   printArrayOfWindows() {
@@ -257,33 +263,52 @@ class Preprocessor {
 }
 
 
-pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2});
+pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
+
 pre.createLogNodeHashmap()
   .then ( (result) => {
-    return pre.getArrayOfWindows();
+    pre2 = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result).length + 1, "logNodeHashmap" : result});
+    return pre2.createLogNodeHashmap();
+  })
+  .then ( (result2) => {
+    pre3 = new Preprocessor({"logFilePath" : Util.MAR09_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result2).length + 1, "logNodeHashmap" : result2});
+    return pre3.createLogNodeHashmap();
+  })
+  .then ( (result3) => {
+    pre4 = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result3).length + 1, "logNodeHashmap" : result3});
+    return pre4.createLogNodeHashmap();
+  })
+  .then ( (result4) => {
+    pre4.reverseHashmap();
+    return pre4.getArrayOfWindows();
   })
   .then ( (arrayOfWindows) => {
-    return pre.classifyWindows();
+    return pre4.classifyWindows();
   })
   .then ( (arrayOfClassifiedWindows) => {
     // const naiveBayes = new NaiveBayes({"logger" : log4js});
-    pre.printArrayOfWindows();
+    //pre.printArrayOfWindows();
     const arrayOfWindows = arrayOfClassifiedWindows;
-    const TRAINING_COLUMNS = ['NO_OF_Bs', 'NO_OF_Gs', 'NO_OF_Fs', 'CATEGORY'];
-    const TRAINING_DATA = pre.getTrainingData();
-    const classifier = new bayes.NaiveBayes({
-      columns : TRAINING_COLUMNS,
-      data : TRAINING_DATA,
-      verbose: true
+    const TRAINING_DATA = pre4.getTrainingData();
+    console.log(TRAINING_DATA);
+    const clf = new svm.SVM({
+      svmType: 'C_SVC',
+      kFold: 10,
+      kernelType: 'LINEAR'
     });
-    classifier.train();
-    //logger.info(pre.arrayOfWindows[0]);
-    const pred = classifier.predict([
-      pre.arrayOfWindows[0].getLabelFreq('B'),
-      pre.arrayOfWindows[0].getLabelFreq('G'),
-      pre.arrayOfWindows[0].getLabelFreq('F')
-    ]);
-    logger.info(pred);
+    clf.train(TRAINING_DATA).done( (report) => {
+      logger.info("Report: ");
+      logger.info(report[1]);
+      logger.info("Class: " );
+      const index = 11;
+      const prediction = clf.predictSync([
+        arrayOfClassifiedWindows[index].getLabelFreq('B'),
+        arrayOfClassifiedWindows[index].getLabelFreq('G'),
+        arrayOfClassifiedWindows[index].getLabelFreq('F')
+      ]);
+      logger.info("Prediction: " + prediction);
+    });
+
 
   });
 
