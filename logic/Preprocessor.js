@@ -4,6 +4,7 @@ const stream = require('stream');
 const Promise = require('bluebird');
 const moment = require('moment');
 const svm = require('node-svm');
+const ml = require('machine_learning');
 const log4js = require('log4js');
 log4js.configure(
   {
@@ -222,18 +223,20 @@ class Preprocessor {
 
   getTrainingData() {
     let TRAINING_DATA = [];
+    let LABELS = [];
     for (let i = 0; i < this.arrayOfWindows.length; i++){
       let DATA = [
-        [
-          this.arrayOfWindows[i].getLabelFreq('B'),
-          this.arrayOfWindows[i].getLabelFreq('G'),
-          this.arrayOfWindows[i].getLabelFreq('F')
-        ],
-        (this.arrayOfWindows[i].getLabel() == 'G_WINDOW') ? 1 : 0
+        this.arrayOfWindows[i].getLabelFreq('B'),
+        this.arrayOfWindows[i].getLabelFreq('G'),
+        this.arrayOfWindows[i].getLabelFreq('F')
       ];
       TRAINING_DATA.push(DATA);
+      LABELS.push(this.arrayOfWindows[i].getLabel());
     }
-    return TRAINING_DATA;
+    return {
+      "data" : TRAINING_DATA,
+      "result" : LABELS
+    };
   }
 
   getLogNodeHashmap() {
@@ -291,24 +294,23 @@ pre.createLogNodeHashmap()
     const arrayOfWindows = arrayOfClassifiedWindows;
     const TRAINING_DATA = pre4.getTrainingData();
     console.log(TRAINING_DATA);
-    const clf = new svm.SVM({
-      svmType: 'C_SVC',
-      kFold: 10,
-      kernelType: 'LINEAR'
+    const dt = new ml.DecisionTree({
+      data: TRAINING_DATA.data,
+      result: TRAINING_DATA.result
     });
-    clf.train(TRAINING_DATA).done( (report) => {
-      logger.info("Report: ");
-      logger.info(report[1]);
-      logger.info("Class: " );
-      const index = 11;
-      const prediction = clf.predictSync([
-        arrayOfClassifiedWindows[index].getLabelFreq('B'),
-        arrayOfClassifiedWindows[index].getLabelFreq('G'),
-        arrayOfClassifiedWindows[index].getLabelFreq('F')
-      ]);
-      logger.info("Prediction: " + prediction);
-    });
+    dt.build();
+    dt.prune();
+    dt.print();
 
+    const index = 8;
+    const prediction = dt.classify([
+      arrayOfWindows[index].getLabelFreq('B'),
+      arrayOfWindows[index].getLabelFreq('G'),
+      arrayOfWindows[index].getLabelFreq('F')
+    ]);
+
+    console.log("Prediction: ");
+    console.log(prediction);
 
   });
 
