@@ -15,6 +15,7 @@
     "bluebird": "^3.4.6",
     "ejs": "^2.5.2",
     "express": "^4.14.0",
+    "json2csv": "^3.7.3",
     "lodash": "^4.17.2",
     "log4js": "^1.1.0",
     "machine_learning": "^0.1.1",
