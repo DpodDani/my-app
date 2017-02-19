@@ -3,8 +3,9 @@ const readline = require('readline');
 const stream = require('stream');
 const Promise = require('bluebird');
 const moment = require('moment');
-const svm = require('node-svm');
 const ml = require('machine_learning');
+const json2csv = require('json2csv');
+
 const log4js = require('log4js');
 log4js.configure(
   {
@@ -239,10 +240,6 @@ class Preprocessor {
     };
   }
 
-  getLogNodeHashmap() {
-    return this.logNodeHashmap;
-  }
-
   printArrayOfWindows() {
     const arrayOfWindows = this.arrayOfWindows;
     for (let i = 0; i < arrayOfWindows.length; i++){
@@ -255,13 +252,35 @@ class Preprocessor {
     }
   }
 
-  // writeWindowsToFile(filePath){
-  //   for (let i = 0; i < this.arrayOfWindows.length; i++){
-  //     let myWindow = this.arrayOfWindows[i];
-  //     let message = "Window label: " + myWindow.getLabel() + ", noOfBs: " + myWindow.getLabelFreq('B');
-  //   }
-  //   fs.writeFileSync(filePath, data, 'utf8');
-  // }
+  saveWindowsToCSV() {
+    const arrayOfJsonWindows = this.getJsonOfWindows();
+    const csv = json2csv({
+      data : arrayOfJsonWindows.arrayOfJsonWindows,
+      fields : arrayOfJsonWindows.attributeColumns
+    });
+
+    fs.writeFileSync("python/window_attr.csv", csv, 'utf8')
+    logger.trace("CSV written to file in Python folder");
+  }
+
+  getJsonOfWindows() {
+    const arrayOfWindows = this.arrayOfWindows;
+    const attributeColumns = ['noOfBs', 'noOfGs', 'noOfFs', 'label'];
+    const arrayOfJsonWindows = [];
+
+    for (let i = 0; i < arrayOfWindows.length; i++){
+      arrayOfJsonWindows.push({
+        "noOfBs" : arrayOfWindows[i].getLabelFreq('B'),
+        "noOfGs" : arrayOfWindows[i].getLabelFreq('G'),
+        "noOfFs" : arrayOfWindows[i].getLabelFreq('F'),
+        "label" : (arrayOfWindows[i].getLabel() === 'G_WINDOW') ? 1 : 0
+      });
+    }
+    return {
+      "attributeColumns" : attributeColumns,
+      "arrayOfJsonWindows" : arrayOfJsonWindows
+    };
+  }
 
 }
 
@@ -289,28 +308,8 @@ pre.createLogNodeHashmap()
     return pre4.classifyWindows();
   })
   .then ( (arrayOfClassifiedWindows) => {
-    // const naiveBayes = new NaiveBayes({"logger" : log4js});
-    //pre.printArrayOfWindows();
-    const arrayOfWindows = arrayOfClassifiedWindows;
-    const TRAINING_DATA = pre4.getTrainingData();
-    console.log(TRAINING_DATA);
-    const dt = new ml.DecisionTree({
-      data: TRAINING_DATA.data,
-      result: TRAINING_DATA.result
-    });
-    dt.build();
-    dt.prune();
-    dt.print();
 
-    const index = 8;
-    const prediction = dt.classify([
-      arrayOfWindows[index].getLabelFreq('B'),
-      arrayOfWindows[index].getLabelFreq('G'),
-      arrayOfWindows[index].getLabelFreq('F')
-    ]);
-
-    console.log("Prediction: ");
-    console.log(prediction);
+    pre4.saveWindowsToCSV(); // outputs attributes of all windows to a CSV file (which will then be read in by a Python file)
 
   });
 
