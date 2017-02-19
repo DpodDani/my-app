@@ -10,7 +10,11 @@ class LineClassifier {
       'fail',
       'segfault',
       'overflow',
-      'lost'
+      'lost',
+      'evicted',
+      'timeout',
+      'out_of_memory',
+      'page_fault'
     ];
   }
 
