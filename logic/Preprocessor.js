@@ -273,7 +273,7 @@ class Preprocessor {
         "noOfBs" : arrayOfWindows[i].getLabelFreq('B'),
         "noOfGs" : arrayOfWindows[i].getLabelFreq('G'),
         "noOfFs" : arrayOfWindows[i].getLabelFreq('F'),
-        "label" : (arrayOfWindows[i].getLabel() === 'G_WINDOW') ? 1 : 0
+        "label" : (arrayOfWindows[i].getLabel() === 'G_WINDOW') ? 1 : 0 // Python machine learning model expects a float (integer in our case) as a label
       });
     }
     return {
@@ -283,7 +283,6 @@ class Preprocessor {
   }
 
 }
-
 
 pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
 
