@@ -29,7 +29,7 @@ def main():
     noOfFs = f[index]
 
     # Predicting the class of a sample
-    result = clf.predict( [ [ noOfBs, noOfGs, noOfFs ] ] )
+    result = clf.predict( [ [ noOfBs, 1234567687, 0 ] ] )
 
     print log_windows['noOfBs'].describe(), "\n"
 
