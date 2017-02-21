@@ -8,5 +8,6 @@ module.exports = {
   "NAIVEBAYES" : "./NaiveBayes.js",
   "LINE_CLASSIFIER" : "./LineClassifier.js",
   "LOG_NODE" : "./LogNode.js",
-  "WINDOW" : "./Window.js"
+  "WINDOW" : "./Window.js",
+  "FEATURE_COLLECTOR" : "./FeatureCollector.js"
 };
