@@ -13,11 +13,11 @@ class FeatureCollector {
 
     return new Promise( (resolve, reject) => {
       // calls all the feature collection functions
-      logWindow.setNoOf('B', this.getLabelFreq('B'));
-      logWindow.setNoOf('G', this.getLabelFreq('G'));
-      logWindow.setNoOf('F', this.getLabelFreq('F'));
-      logWindow.setLongestSeqOf('B', this.getLongestSequence('B'));
-      logWindow.setLongestSeqOf('G', this.getLongestSequence('G'));
+      logWindow.setFeature('noOfBs', this.getLabelFreq('B'));
+      logWindow.setFeature('noOfGs', this.getLabelFreq('G'));
+      logWindow.setFeature('noOfFs', this.getLabelFreq('F'));
+      logWindow.setFeature('longestSeqOfBs', this.getLongestSequence('B'));
+      logWindow.setFeature('longestSeqOfGs', this.getLongestSequence('G'));
 
       resolve(logWindow);
     });
