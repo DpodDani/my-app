@@ -1,46 +1,40 @@
 class Window {
 
-  constructor(startId, sequenceOfLabels, noOfGs, noOfBs, noOfFs,label) {
-    this.startId = startId;
-    this.sequenceOfLabels = sequenceOfLabels;
-    this.noOfGs = noOfGs;
-    this.noOfBs = noOfBs;
-    this.noOfFs = noOfFs;
-    this.label = label;
+  constructor(startId, sequenceOfLabels) {
+    this.startId = startId; // the key (in the logNodeHashmap) of the Log at the beginning of this Window
+    this.sequenceOfLabels = sequenceOfLabels; // the sequence of Log labels
+    this.label = ''; // the label for this Window
+    this.featureHashmap = {}; // the map of features for this Window
   }
 
-  getLabelFreq(labelName) {
-    switch(labelName){
-      case 'B': return this.noOfBs; break;
-      case 'G': return this.noOfGs; break;
-      case 'F': return this.noOfFs; break;
-    }
-  }
-
-  // getLabelCertainty() {
-  //   if (this.label == 'G_WINDOW') {
-  //     return ((this.noOfGs / (this.noOfGs + this.noOfBs + this.noOfFs)) * 100).toFixed(1) + "%";
-  //   } else if (this.label == 'B_WINDOW') {
-  //     return ((this.noOfBs / (this.noOfGs + this.noOfBs + this.noOfFs)) * 100).toFixed(1) + "%";
-  //   } else {
-  //     return 0;
-  //   }
-  // }
-
+  // returns the sequence of Log labels inside this Window
   getSequence() {
     return this.sequenceOfLabels;
   }
 
+  // returns the key (in the logNodeHashmap) of the Log at the beginning of this Window
   getStartId() {
     return this.startId;
   }
 
+  // returns the label for this Window
   getLabel() {
     return this.label;
   }
 
+  // sets the label for this Window
   setLabel(label) {
     this.label = label;
+  }
+
+  // stores a feature and its value in the feature hashmap
+  setFeature(featureName, featureValue) {
+    this.featureHashmap[featureName] = featureValue;
+  }
+
+  // gets the value of a feature from the feature hashmap
+  getFeature(featureName) {
+    return this.featureHashmap[featureName] || 0;
   }
 
 }
