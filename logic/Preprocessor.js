@@ -1,6 +1,7 @@
 const fs = require('fs');
 const readline = require('readline');
 const stream = require('stream');
+const async = require('async');
 const Promise = require('bluebird');
 const moment = require('moment');
 const ml = require('machine_learning');
@@ -22,6 +23,7 @@ const logger = log4js.getLogger('PRE');
 const LogNode = require(Util.LOG_NODE);
 const Window = require(Util.WINDOW);
 const LineClassifier = require(Util.LINE_CLASSIFIER);
+const FeatureCollector = require(Util.FEATURE_COLLECTOR);
 // const NaiveBayes = require(Util.NAIVEBAYES);
 
 const DEFAULT_WINDOW_SIZE = 2;
@@ -110,11 +112,7 @@ class Preprocessor {
         let result = this.collectWindows(index);
         arrayOfWindows.push(new Window(
           result.startIndex,
-          result.sequenceOfLabels,
-          result.noOfGs,
-          result.noOfBs,
-          result.noOfFs,
-          (result.noOfGs > result.noOfBs) ? 'G_WINDOW' : 'B_WINDOW'
+          result.sequenceOfLabels
         ));
         index = result.lastNodeIndex;
       }
@@ -138,7 +136,7 @@ class Preprocessor {
     let startNode = this.logNodeHashmap[startIndex];
     let startTime = startNode.getTimestamp();
     let newStart = startIndex; // used in case an F appears and readjusts the starting point of the window
-    let sequenceOfLabels = startNode.getLabel();
+    let sequenceOfLabels = '';
     let secondarySequence = ''; // once an F is encountered, any further occurrences of Fs will result in some deletion from the sequence of labels
     let stopSearch = false;
     let noOfBs = 0;
@@ -178,10 +176,7 @@ class Preprocessor {
     return {
       "startIndex" : newStart,
       "sequenceOfLabels" : sequenceOfLabels,
-      "lastNodeIndex" : startIndex,
-      "noOfGs" : noOfGs,
-      "noOfBs" : noOfBs,
-      "noOfFs" : noOfFs
+      "lastNodeIndex" : startIndex
     };
   }
 
@@ -214,12 +209,41 @@ class Preprocessor {
 
   getWindowClass(logWindow) {
     const THRESHOLD = 0.8;
-    const noOfBs = logWindow.getLabelFreq('B');
-    const noOfGs = logWindow.getLabelFreq('G');
-    const noOfFs = logWindow.getLabelFreq('F');
+    const noOfBs = logWindow.getFeature('noOfBs');
+    const noOfGs = logWindow.getFeature('noOfGs');
+    const noOfFs = logWindow.getFeature('noOfFs');
     const windowLabel = ((noOfGs > THRESHOLD * noOfBs) && (noOfFs < 1)) ? 'G_WINDOW' : 'B_WINDOW';
     logWindow.setLabel(windowLabel);
     return logWindow;
+  }
+
+  getWindowFeatures() {
+    const arrayOfWindows = this.arrayOfWindows;
+    const arrayOfPromises = [];
+
+    return new Promise( (resolve, reject) => {
+      for (let i = 0; i < arrayOfWindows.length; i++){
+        arrayOfPromises.push(
+          new Promise ( (resolve, reject) => {
+            const featureCollector = new FeatureCollector(arrayOfWindows[i]);
+            featureCollector.startCollection().then( (newLogWindow) => {
+
+              if (newLogWindow.constructor.name != 'Window') {
+                reject("Did not get a Window instance");
+              } else {
+                arrayOfWindows[i] = newLogWindow;
+                resolve();
+              }
+
+            })
+          })
+        );
+      }
+      Promise.all(arrayOfPromises).then( () => {
+        this.arrayOfWindows = arrayOfWindows;
+        resolve(arrayOfWindows);
+      });
+    });
   }
 
   getTrainingData() {
@@ -265,17 +289,20 @@ class Preprocessor {
 
   getJsonOfWindows() {
     const arrayOfWindows = this.arrayOfWindows;
-    const attributeColumns = ['noOfBs', 'noOfGs', 'noOfFs', 'label'];
+    const attributeColumns = arrayOfWindows[0].getArrayOfFeatureNames();
+    attributeColumns.push('label');
     const arrayOfJsonWindows = [];
 
     for (let i = 0; i < arrayOfWindows.length; i++){
-      arrayOfJsonWindows.push({
-        "noOfBs" : arrayOfWindows[i].getLabelFreq('B'),
-        "noOfGs" : arrayOfWindows[i].getLabelFreq('G'),
-        "noOfFs" : arrayOfWindows[i].getLabelFreq('F'),
-        "label" : (arrayOfWindows[i].getLabel() === 'G_WINDOW') ? 1 : 0 // Python machine learning model expects a float (integer in our case) as a label
-      });
+      let jsonObject = {};
+      for (let j = 0; j < attributeColumns.length; j++){
+        let featureName = attributeColumns[j];
+        jsonObject[featureName] = arrayOfWindows[i].getFeature(featureName);
+      }
+      jsonObject['label'] = (arrayOfWindows[i].getLabel() === 'G_WINDOW') ? 1 : 0;
+      arrayOfJsonWindows.push(jsonObject);
     }
+
     return {
       "attributeColumns" : attributeColumns,
       "arrayOfJsonWindows" : arrayOfJsonWindows
@@ -288,28 +315,30 @@ pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2})
 
 pre.createLogNodeHashmap()
   .then ( (result) => {
-    pre2 = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result).length + 1, "logNodeHashmap" : result});
-    return pre2.createLogNodeHashmap();
+    pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result).length + 1, "logNodeHashmap" : result});
+    return pre.createLogNodeHashmap();
   })
   .then ( (result2) => {
-    pre3 = new Preprocessor({"logFilePath" : Util.MAR09_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result2).length + 1, "logNodeHashmap" : result2});
-    return pre3.createLogNodeHashmap();
+    pre = new Preprocessor({"logFilePath" : Util.MAR09_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result2).length + 1, "logNodeHashmap" : result2});
+    return pre.createLogNodeHashmap();
   })
   .then ( (result3) => {
-    pre4 = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result3).length + 1, "logNodeHashmap" : result3});
-    return pre4.createLogNodeHashmap();
+    pre = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result3).length + 1, "logNodeHashmap" : result3});
+    return pre.createLogNodeHashmap();
   })
   .then ( (result4) => {
-    pre4.reverseHashmap();
-    return pre4.getArrayOfWindows();
+    pre.reverseHashmap();
+    return pre.getArrayOfWindows();
   })
   .then ( (arrayOfWindows) => {
-    return pre4.classifyWindows();
+    return pre.getWindowFeatures();
+  })
+  .then ( (arrayOfFeaturedWindows) => {
+    return pre.classifyWindows();
   })
   .then ( (arrayOfClassifiedWindows) => {
-
-    pre4.saveWindowsToCSV(); // outputs attributes of all windows to a CSV file (which will then be read in by a Python file)
-
+    pre.arrayOfWindows[0];
+    pre.saveWindowsToCSV(); // outputs attributes of all windows to a CSV file (which will then be read in by a Python file)
   });
 
 module.exports = Preprocessor;
