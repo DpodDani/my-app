@@ -37,6 +37,10 @@ class Window {
     return this.featureHashmap[featureName] || 0;
   }
 
+  getArrayOfFeatureNames() {
+    return Object.keys(this.featureHashmap);
+  }
+
 }
 
 module.exports = Window;
