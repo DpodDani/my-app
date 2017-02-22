@@ -41,6 +41,7 @@ class FeatureCollector {
   getLongestSequence(label) {
     const sequenceOfLabels = this.sequenceOfLabels;
     let searchForSequence = true;
+    let indexOfMaxSeq = 0;
     let maxLength = 0;
     let currentLength = 0;
 
@@ -54,13 +55,16 @@ class FeatureCollector {
         if (sequenceOfLabels[i] == label){
           currentLength++;
         } else {
-          if (currentLength > maxLength) maxLength = currentLength;
+          if (currentLength > maxLength){
+            maxLength = currentLength;
+            indexOfMaxSeq = i - currentLength;
+          }
           currentLength = 0;
           searchForSequence = false;
         }
       }
     }
-    return maxLength;
+    return (this.getLabelFreq('F') > 0) ? indexOfMaxSeq : 0;
   }
 
 }
