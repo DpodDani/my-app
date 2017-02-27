@@ -26,7 +26,7 @@ def main():
 
     # PREPARE MODEL
     models = []
-    models.append(('CART', DecisionTreeClassifier()))
+    models.append(('DT', DecisionTreeClassifier()))
     models.append(('NB', GaussianNB()))
     models.append(('SVM', SVC()))
 
