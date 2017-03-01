@@ -23,12 +23,11 @@ const logger = log4js.getLogger('PRE');
 const LogNode = require(Util.LOG_NODE);
 const Window = require(Util.WINDOW);
 const LineClassifier = require(Util.LINE_CLASSIFIER);
+const WindowClassifier = require(Util.WINDOW_CLASSIFIER);
 const FeatureCollector = require(Util.FEATURE_COLLECTOR);
 // const NaiveBayes = require(Util.NAIVEBAYES);
 
 const DEFAULT_WINDOW_SIZE = 2;
-
-// TODO: Implement algorithm for classifying windows (by majority of particular label)
 
 class Preprocessor {
 
@@ -195,26 +194,32 @@ class Preprocessor {
   }
 
   classifyWindows() {
+    const arrayOfWindows = this.arrayOfWindows;
+    const arrayOfPromises = [];
+
     return new Promise( (resolve, reject) => {
-      const arrayOfWindows = this.arrayOfWindows;
-
       for (let i = 0; i < arrayOfWindows.length; i++){
-        arrayOfWindows[i] = this.getWindowClass(arrayOfWindows[i]);
+        arrayOfPromises.push(
+          new Promise ( (resolve, reject) => {
+            const windowClassify = new WindowClassifier(arrayOfWindows[i], i);
+            windowClassify.getClassification().then( (newLogWindow) => {
+
+              if (newLogWindow.constructor.name != 'Window') {
+                reject("Did not get a Window instance");
+              } else {
+                arrayOfWindows[i] = newLogWindow;
+                resolve();
+              }
+
+            })
+          })
+        );
       }
-
-      this.arrayOfWindows = arrayOfWindows;
-      resolve(arrayOfWindows);
+      Promise.all(arrayOfPromises).then( () => {
+        this.arrayOfWindows = arrayOfWindows;
+        resolve(arrayOfWindows);
+      });
     });
-  }
-
-  getWindowClass(logWindow) {
-    const THRESHOLD = 0.8;
-    const noOfBs = logWindow.getFeature('noOfBs');
-    const noOfGs = logWindow.getFeature('noOfGs');
-    const noOfFs = logWindow.getFeature('noOfFs');
-    const windowLabel = ((noOfGs > THRESHOLD * noOfBs) && (noOfFs < 1)) ? 'G_WINDOW' : 'B_WINDOW';
-    logWindow.setLabel(windowLabel);
-    return logWindow;
   }
 
   getWindowFeatures() {
