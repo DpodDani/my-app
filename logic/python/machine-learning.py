@@ -13,6 +13,8 @@ from sklearn.model_selection import cross_val_score
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 
+# TODO: Large standard deviation could be due to inbalance
+
 def main():
     log_windows = pd.read_csv(dirname + '/window_attr.csv', header = 0)
 
@@ -34,7 +36,7 @@ def main():
     seed = 7
     results = []
     names = []
-    scoring = 'accuracy'
+    scoring = 'roc_auc'
     for name, model in models:
         kfold = model_selection.KFold(n_splits=10, random_state=seed)
         cv_results = model_selection.cross_val_score(model, log_windows, window_labels, cv=kfold, scoring=scoring)
