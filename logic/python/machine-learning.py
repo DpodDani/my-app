@@ -18,8 +18,7 @@ dirname = os.path.dirname(os.path.abspath(__file__))
 def main():
     log_windows = pd.read_csv(dirname + '/window_attr.csv', header = 0)
 
-    # Obtain labels and delete it from log wi
-    ndow DataFrame
+    # Obtain labels and delete it from log window DataFrame
     window_labels = log_windows['label']
     del log_windows['label']
 
