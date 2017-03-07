@@ -33,26 +33,27 @@ def main():
     models.append(('SVM', SVC()))
 
     # EVALUATE EACH MODEL IN TURN
-    # seed = 7
-    # results = []
-    # names = []
-    # scoring = 'roc_auc'
-    # for name, model in models:
-    #     kfold = model_selection.KFold(n_splits=10, random_state=seed)
-    #     cv_results = model_selection.cross_val_score(model, scaled_windows, window_labels, cv=kfold, scoring=scoring)
-    #     results.append(cv_results)
-    #     names.append(name)
-    #     msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
-    # 	print(msg)
-    #
-    # GRAPH PLOTTING ONLY WORKS ON JOSHUA MACHINE
-    # fig = plt.figure()
-    # fig.suptitle('Algorithm Comparison')
-    # ax = fig.add_subplot(111)
-    # plt.boxplot(results)
-    # ax.set_xticklabels(names)
-    # plt.show()
+    seed = 7
+    results = []
+    names = []
+    scoring = 'accuracy'
+    for name, model in models:
+        kfold = model_selection.KFold(n_splits=10, random_state=seed)
+        cv_results = model_selection.cross_val_score(model, scaled_windows, window_labels, cv=kfold, scoring=scoring)
+        results.append(cv_results)
+        names.append(name)
+        msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    	print(msg)
 
+    GRAPH PLOTTING ONLY WORKS ON JOSHUA MACHINE
+    fig = plt.figure()
+    fig.suptitle('Algorithm Comparison')
+    ax = fig.add_subplot(111)
+    plt.boxplot(results)
+    ax.set_xticklabels(names)
+    plt.show()
+
+    # True class = 0
     scaled_new_values = scalar.transform([[2085,1411,0,0,0,0,0]])
 
     # DEMO FOR PRESENTATION
