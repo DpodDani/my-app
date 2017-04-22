@@ -6,6 +6,7 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const ml = require('machine_learning');
 const json2csv = require('json2csv');
+const util = require('util');
 
 const log4js = require('log4js');
 log4js.configure(
@@ -193,7 +194,22 @@ class Preprocessor {
     this.logNodeHashmap = rHashmap;
   }
 
-  classifyWindows() {
+  printWindowInfo() {
+    const arrayOfWindows = this.arrayOfWindows;
+    let gWindows = 0;
+    let bWindows = 0;
+
+    for (let i = 0; i < arrayOfWindows.length; i++){
+      let window = arrayOfWindows[i];
+      if (window.getLabel() == 'G_WINDOW') gWindows++;
+      else bWindows++;
+    }
+
+    logger.info("Number of GOOD windows: " + gWindows);
+    logger.info("Number of BAD windows: " + bWindows);
+  }
+
+  classifyWindows(THRESHOLD) {
     const arrayOfWindows = this.arrayOfWindows;
     const arrayOfPromises = [];
 
@@ -201,7 +217,7 @@ class Preprocessor {
       for (let i = 0; i < arrayOfWindows.length; i++){
         arrayOfPromises.push(
           new Promise ( (resolve, reject) => {
-            const windowClassify = new WindowClassifier(arrayOfWindows[i], i);
+            const windowClassify = new WindowClassifier(arrayOfWindows[i], THRESHOLD);
             windowClassify.getClassification().then( (newLogWindow) => {
 
               if (newLogWindow.constructor.name != 'Window') {
@@ -318,32 +334,44 @@ class Preprocessor {
 
 pre = new Preprocessor({"logFilePath" : Util.MAR01_FILE_PATH, "windowSize" : 2});
 
-pre.createLogNodeHashmap()
-  .then ( (result) => {
-    pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result).length + 1, "logNodeHashmap" : result});
-    return pre.createLogNodeHashmap();
-  })
-  .then ( (result2) => {
-    pre = new Preprocessor({"logFilePath" : Util.MAR09_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result2).length + 1, "logNodeHashmap" : result2});
-    return pre.createLogNodeHashmap();
-  })
-  .then ( (result3) => {
-    pre = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result3).length + 1, "logNodeHashmap" : result3});
-    return pre.createLogNodeHashmap();
-  })
-  .then ( (result4) => {
-    pre.reverseHashmap();
-    return pre.getArrayOfWindows();
-  })
-  .then ( (arrayOfWindows) => {
-    return pre.getWindowFeatures();
-  })
-  .then ( (arrayOfFeaturedWindows) => {
-    return pre.classifyWindows();
-  })
-  .then ( (arrayOfClassifiedWindows) => {
-    pre.arrayOfWindows[0];
-    pre.saveWindowsToCSV(); // outputs attributes of all windows to a CSV file (which will then be read in by a Python file)
-  });
+// 2404826 Mar 1 00:01:26 i138-212 kernel X %sLustre: %d:(%s:%d:%s()) %x-%x: an error occurred while communicating with %s. The %s operation failed with %d\n  %sLustre: %d:(%s:%d:%s()) %x-%x: an error occurred while communicating with %s. The %s operation failed with %d\n   <3>   14779  client.c  client.c   975  ptlrpc_check_status  ptlrpc_check_status   17   0   129.114.97.1@o2ib  mds_close  mds_close   -116
+
+const m1 = '2404826 Mar 1 00:01:26 i138-212 kernel X %sLustre: %d:(%s:%d:%s()) %x-%x: an error occurred while communicating with %s. The %s operation failed with %d\n  %sLustre: %d:(%s:%d:%s()) %x-%x: an error occurred while communicating with %s. The %s operation failed with %d\n';
+
+//console.log(util.format(m1, '<3>', 14779, 'client.c', 'client.c', 975, 'ptlrpc_check_status',  'ptlrpc_check_status', 17, 0, '129.114.97.1@o2ib', 'mds_close', 'mds_close', -116));
+
+ pre.createLogNodeHashmap()
+   .then ( (result) => {
+     pre = new Preprocessor({"logFilePath" : Util.MAR06_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result).length + 1, "logNodeHashmap" : result});
+     return pre.createLogNodeHashmap();
+   })
+   .then ( (result2) => {
+     pre = new Preprocessor({"logFilePath" : Util.MAR09_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result2).length + 1, "logNodeHashmap" : result2});
+     return pre.createLogNodeHashmap();
+   })
+   .then ( (result3) => {
+     pre = new Preprocessor({"logFilePath" : Util.MAR11_FILE_PATH, "windowSize" : 2, "counterStart" : Object.keys(result3).length + 1, "logNodeHashmap" : result3});
+     return pre.createLogNodeHashmap();
+   })
+   .then ( (result4) => {
+     pre.reverseHashmap();
+     return pre.getArrayOfWindows();
+   })
+   .then ( (arrayOfWindows) => {
+     return pre.getWindowFeatures();
+   })
+   .then ( (arrayOfFeaturedWindows) => {
+    //  return pre.classifyWindows();
+     const THRESHOLD = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+     for (let i = 0; i < THRESHOLD.length; i++){
+       pre.classifyWindows(THRESHOLD[i]);
+       pre.printWindowInfo();
+     }
+   })
+  //  .then ( (arrayOfClassifiedWindows) => {
+  //    logger.info(arrayOfClassifiedWindows[22]);
+  //    pre.printWindowInfo();
+  //    pre.saveWindowsToCSV(); // outputs attributes of all windows to a CSV file (which will then be read in by a Python file)
+  //  });
 
 module.exports = Preprocessor;
