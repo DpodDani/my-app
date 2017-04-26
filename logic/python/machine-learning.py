@@ -7,9 +7,13 @@ from sklearn import preprocessing#, tree, svm, naive_bayes
 from sklearn import model_selection
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
+
+from sklearn.metrics import confusion_matrix
+from sklearn import cross_validation
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 
@@ -17,44 +21,71 @@ dirname = os.path.dirname(os.path.abspath(__file__))
 
 def main():
     log_windows = pd.read_csv(dirname + '/window_attr.csv', header = 0)
+    headers = list(log_windows)
+    # print headers
 
     # Obtain labels and delete it from log window DataFrame
     window_labels = log_windows['label']
     del log_windows['label']
 
     # Standardise the data
-    scalar = preprocessing.StandardScaler().fit(log_windows)
-    scaled_windows = scalar.transform(log_windows)
+    # scalar = preprocessing.StandardScaler().fit(log_windows)
+    scalar = preprocessing.MaxAbsScaler()
+    scaled_windows = scalar.fit_transform(log_windows)
 
     # PREPARE MODEL
     models = []
     models.append(('DT', DecisionTreeClassifier()))
-    models.append(('NB', GaussianNB()))
+    models.append(('KN', KNeighborsClassifier()))
     models.append(('SVM', SVC()))
 
     # EVALUATE EACH MODEL IN TURN
     seed = 7
     results = []
     names = []
-    scoring = 'accuracy'
+    scoring = 'recall_macro'
     for name, model in models:
-        kfold = model_selection.KFold(n_splits=10, random_state=seed)
-        cv_results = model_selection.cross_val_score(model, scaled_windows, window_labels, cv=kfold, scoring=scoring)
+        # kfold = model_selection.KFold(n_splits=10, random_state=seed)
+        cv_results = model_selection.cross_val_score(model, scaled_windows, window_labels, cv=5, scoring=scoring)
         results.append(cv_results)
         names.append(name)
         msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
     	print(msg)
 
-    GRAPH PLOTTING ONLY WORKS ON JOSHUA MACHINE
-    fig = plt.figure()
-    fig.suptitle('Algorithm Comparison')
-    ax = fig.add_subplot(111)
-    plt.boxplot(results)
-    ax.set_xticklabels(names)
-    plt.show()
+        # PRINTING CONFUSION MATRIX score
+        kf = cross_validation.KFold(len(window_labels), n_folds=5)
+        for train_index, test_index in kf:
+
+           X_train, X_test = scaled_windows[train_index], scaled_windows[test_index]
+           y_train, y_test = window_labels[train_index], window_labels[test_index]
+
+           model.fit(X_train, y_train)
+        #    print confusion_matrix(y_test, model.predict(X_test))
+           cnf_matrix = confusion_matrix(y_test, model.predict(X_test))
+
+           class_names = model.classes_
+
+           # Plot non-normalized confusion matrix
+            plt.figure()
+            plot_confusion_matrix(cnf_matrix, classes=class_names,
+                              title='Confusion matrix, without normalization')
+            # Plot normalized confusion matrix
+            plt.figure()
+            plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
+                              title='Normalized confusion matrix')
+
+            plt.show()
+
+    # GRAPH PLOTTING ONLY WORKS ON JOSHUA MACHINE
+    # fig = plt.figure()
+    # fig.suptitle('Algorithm Comparison')
+    # ax = fig.add_subplot(111)
+    # plt.boxplot(results)
+    # ax.set_xticklabels(names)
+    # plt.show()
 
     # True class = 0
-    scaled_new_values = scalar.transform([[2085,1411,0,0,0,0,0]])
+    scaled_new_values = scalar.transform([[27369,2210,1,3716,453,49,4]])
 
     # DEMO FOR PRESENTATION
     for name, model in models:
